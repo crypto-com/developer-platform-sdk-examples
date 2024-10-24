@@ -113,3 +113,10 @@ files/
 
 # sops
 **/**.dec.yaml
+
+
+dist/*
+node_modules/*
+client/*
+.env
+*.lock

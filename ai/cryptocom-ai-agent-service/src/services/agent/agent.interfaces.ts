@@ -10,9 +10,7 @@ export interface ExplorerKeys {
 export interface Options {
   openAI: OpenAIOptions;
   chainId: number;
-  explorer: ExplorerKeys;
-  signerAppUrl?: string;
-  context?: QueryContext[];
+  context: QueryContext[];
 }
 
 export interface Tool<T> {
