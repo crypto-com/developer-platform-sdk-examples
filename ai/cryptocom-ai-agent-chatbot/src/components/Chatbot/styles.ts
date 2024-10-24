@@ -56,8 +56,8 @@ export const StyledMessageComponent = styled.div<{ message: Message }>`
     props.message.type === "user"
       ? "#57bfe8"
       : props.message.isJson
-      ? "#333"
-      : "#f4f4f4"};
+        ? "#333"
+        : "#f4f4f4"};
   color: ${(props) =>
     props.message.isJson || props.message.type === "user" ? "#fff" : "#000"};
   font-family: ${(props) => (props.message.isJson ? "monospace" : "inherit")};
