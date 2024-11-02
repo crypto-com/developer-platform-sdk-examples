@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import webbrowser
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -69,8 +70,16 @@ def main():
                 for result in response.get("results", []):
                     print(f"\nAI Agent: {result.get('status', 'No status')}")
                     if "data" in result:
-                        print("\nData:")
-                        print(json.dumps(result["data"], indent=2))
+                        data = result["data"]
+                        # Check if the response contains a magic link
+                        if isinstance(data, dict) and "magicLink" in data:
+                            magic_link = data["magicLink"]
+                            print("\nTransaction Ready!")
+                            print("Opening signature page in your default browser...")
+                            webbrowser.open(magic_link)
+                        else:
+                            print("\nData:")
+                            print(json.dumps(data, indent=2))
         else:
             print("\nAI Agent: Sorry, I couldn't connect to the service.")
 
