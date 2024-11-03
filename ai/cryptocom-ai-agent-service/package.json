@@ -14,7 +14,7 @@
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
-    "@crypto.com/developer-platform-client": "file:./client",
+    "@crypto.com/developer-platform-client": "^1.0.5",
     "axios": "1.7.7",
     "cors": "2.8.5",
     "dotenv": "16.4.5",
