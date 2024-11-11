@@ -9,12 +9,17 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+import requests
+import json
 
 # Get bot token from environment variable
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not BOT_TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set!")
+if not OPENAI_API_KEY:
+    raise ValueError("OPENAI_API_KEY environment variable is not set!")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -57,10 +62,54 @@ async def debug_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(debug_message)
 
 
+async def send_query(query: str) -> dict:
+    """Send a query to the AI Agent Service and return the response."""
+    url = "http://localhost:8000/api/v1/cdc-ai-agent-service/query"
+    
+    payload = {
+        "query": query,
+        "options": {"openAI": {"apiKey": OPENAI_API_KEY}},
+    }
+    
+    headers = {"Content-Type": "application/json"}
+    
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return None
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle regular text messages."""
+    """Handle regular text messages using AI chat."""
     message_text = update.message.text
-    await update.message.reply_text(f"You said: {message_text}")
+    
+    # Send query to AI Agent Service
+    response = await send_query(message_text)
+    
+    if response:
+        if response.get("hasErrors"):
+            await update.message.reply_text("Sorry, there was an error processing your request.")
+        else:
+            # Process each result from the AI agent
+            for result in response.get("results", []):
+                status = result.get('status', 'No status')
+                await update.message.reply_text(f"🤖 {status}")
+                
+                if "data" in result:
+                    data = result["data"]
+                    if isinstance(data, dict) and "magicLink" in data:
+                        magic_link = data["magicLink"]
+                        await update.message.reply_text(
+                            "Transaction Ready! Here's your magic link:\n" + magic_link
+                        )
+                    else:
+                        await update.message.reply_text(
+                            "Data:\n" + json.dumps(data, indent=2)
+                        )
+    else:
+        await update.message.reply_text("Sorry, I couldn't connect to the AI service.")
 
 
 def main():
