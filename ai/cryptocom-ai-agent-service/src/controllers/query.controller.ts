@@ -25,13 +25,18 @@ export const generateResponse = async (
     const context = options.context || [];
 
     const queryService = new QueryService(options);
-    const { functionResponses, context: updatedContext } = await queryService.generateResponse(query, context);
+    const {
+      functionResponses,
+      context: updatedContext,
+      finalResponse,
+    } = await queryService.generateResponse(query, context);
 
     return res.status(HTTP_CODES.CREATED).json({
       status: HTTP_STATUS.SUCCESS,
       hasErrors: functionResponses.some((result) => result.status === Status.Failed),
       results: functionResponses,
       context: updatedContext,
+      finalResponse,
     });
   } catch (error) {
     if (error instanceof OpenAIUnauthorizedError) {

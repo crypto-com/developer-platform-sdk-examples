@@ -41,6 +41,7 @@ export interface FunctionArgs {
   symbol: Symbol;
   fromContractAddress: string;
   toContractAddress: string;
+  name: string;
 }
 
 export enum Symbol {

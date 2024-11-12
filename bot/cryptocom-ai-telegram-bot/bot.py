@@ -23,6 +23,9 @@ if not BOT_TOKEN:
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY environment variable is not set!")
 
+# Add context storage for each user
+user_contexts = {}
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -102,24 +105,25 @@ def shorten_link(url: str):
         return url
 
 
-async def send_query(query: str):
+async def send_query(query: str, context: list = None):
     """
     Send a query to the AI Agent Service and get the response.
 
     Args:
         query (str): The user's query text to be processed
+        context (list): Optional context from previous interactions
 
     Returns:
         dict: The JSON response from the AI service if successful, None otherwise
-
-    Note:
-        Requires OPENAI_API_KEY to be set in environment variables
     """
     url = "http://localhost:8000/api/v1/cdc-ai-agent-service/query"
 
     payload = {
         "query": query,
-        "options": {"openAI": {"apiKey": OPENAI_API_KEY}},
+        "options": {
+            "openAI": {"apiKey": OPENAI_API_KEY},
+            "context": context,
+        },
     }
 
     headers = {"Content-Type": "application/json"}
@@ -133,29 +137,31 @@ async def send_query(query: str):
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Handle regular text messages by processing them through the AI chat service.
-
-    Args:
-        update (Update): The update object containing message data
-        context (ContextTypes.DEFAULT_TYPE): The context object for the handler
-
-    Returns:
-        Sends appropriate responses back to the user based on AI service results,
-        including magic links with inline keyboard buttons when available
-    """
+    """Handle regular text messages by processing them through the AI chat service."""
     message_text = update.message.text
+    user_id = update.effective_user.id
 
-    # Send query to AI Agent Service
-    response = await send_query(message_text)
+    # Initialize context for new users
+    if user_id not in user_contexts:
+        user_contexts[user_id] = []
+
+    # Send query to AI Agent Service with context
+    response = await send_query(message_text, user_contexts[user_id])
 
     if response:
+        # Update context if response has context
+        if "context" in response:
+            user_contexts[user_id].extend(response["context"])
+            # Keep only the latest 10 context entries
+            if len(user_contexts[user_id]) > 10:
+                user_contexts[user_id] = user_contexts[user_id][-10:]
+
         if response.get("hasErrors"):
             await update.message.reply_text(
                 "Sorry, there was an error processing your request."
             )
         else:
-            # Process each result from the AI agent
+            # Process each result from the AI agent first
             for result in response.get("results", []):
                 status = result.get("status", "No status")
                 await update.message.reply_text(f"🤖 {status}")
@@ -181,6 +187,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         await update.message.reply_text(
                             "Data:\n" + json.dumps(data, indent=2)
                         )
+
+            # Display finalResponse last
+            if "finalResponse" in response:
+                await update.message.reply_text(f"🤖 {response['finalResponse']}")
     else:
         await update.message.reply_text("Sorry, I couldn't connect to the AI service.")
 

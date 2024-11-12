@@ -24,7 +24,6 @@ import {
   Role,
   Status,
 } from './agent.interfaces.js';
-/* import TokenService from '../token/token.service.js'; */
 
 /**
  * Initialize Developer Platform SDK
@@ -43,7 +42,6 @@ Client.init({
 export class AIAgentService {
   private options: Options;
   private client: OpenAI;
-  /* private tokenService: TokenService; */
 
   /**
    * @param {Options} options - Configuration options including chain details.
@@ -51,7 +49,6 @@ export class AIAgentService {
   constructor(options: Options) {
     this.options = options;
     this.client = new OpenAI({ apiKey: options.openAI.apiKey });
-    /* this.tokenService = new TokenService(process.env.RPC_URL!, process.env.PRIVATE_KEY!); */
   }
 
   /**
@@ -74,7 +71,7 @@ export class AIAgentService {
         { role: Role.User, content: query },
       ];
       const chatCompletion = await this.client.chat.completions.create({
-        model: this.options.openAI.model || 'gpt-4-turbo',
+        model: this.options.openAI.model || 'gpt-4o',
         messages: messages,
         tools: TOOLS,
         tool_choice: 'auto',
@@ -97,10 +94,16 @@ export class AIAgentService {
    *
    * @async
    * @param {AIMessageResponse} interpretation - The AI's interpretation of the user's query.
-   * @returns {Promise<FunctionCallResponse[]>} - A Promise resolving to the processed blockchain function responses.
+   * @param {string} query - The original user query
+   * @param {QueryContext[]} context - The conversation context
+   * @returns {Promise<{functionResponses: FunctionCallResponse[], finalResponse: string}>}
    * @memberof AIAgentService
    */
-  public async processInterpretation(interpretation: AIMessageResponse): Promise<FunctionCallResponse[]> {
+  public async processInterpretation(
+    interpretation: AIMessageResponse,
+    query: string,
+    context: QueryContext[]
+  ): Promise<{ functionResponses: FunctionCallResponse[]; finalResponse: string }> {
     let functionResponses: FunctionCallResponse[] = [];
     const functionsToExecute = interpretation.tool_calls;
 
@@ -112,13 +115,55 @@ export class AIAgentService {
           return await this.executeFunction(functionName, functionArgs);
         })
       );
-    } else {
-      functionResponses.push({
-        status: Status.Failed,
-        data: { content: interpretation.content },
-      });
     }
-    return functionResponses;
+
+    // Make a second call to OpenAI to generate a final response
+    const finalResponse = await this.generateFinalResponse(query, functionResponses, context);
+
+    return { functionResponses, finalResponse };
+  }
+
+  /**
+   * Generate a final response using OpenAI based on the function results
+   * @param query Original user query
+   * @param functionResponses Results from executed functions
+   * @param context Previous conversation context
+   */
+  private async generateFinalResponse(
+    query: string,
+    functionResponses: FunctionCallResponse[],
+    context: QueryContext[]
+  ): Promise<string> {
+    try {
+      const messages: Array<ChatCompletionMessageParam> = [
+        {
+          role: Role.System,
+          content:
+            'You are a helpful blockchain assistant. Generate a clear, concise response based on the function results.',
+        },
+        ...context,
+        { role: Role.User, content: query },
+        {
+          role: Role.Assistant,
+          content: `Function execution results: ${JSON.stringify(functionResponses, null, 2)}`,
+        },
+      ];
+
+      // for debugging, print pretty json messages
+      console.log(JSON.stringify(messages, null, 2));
+
+      const completion = await this.client.chat.completions.create({
+        model: this.options.openAI.model || 'gpt-4o',
+        messages: messages,
+      });
+      // print pretty json completion
+      console.log(JSON.stringify(completion, null, 2));
+
+      return completion.choices[0].message.content || 'Unable to generate response';
+    } catch (e) {
+      logger.error('Error generating final response:', e);
+      return 'Error generating final response';
+    }
   }
 
   /**
@@ -163,26 +208,6 @@ export class AIAgentService {
             amount: functionArgs.amount,
             contractAddress: functionArgs.contractAddress,
           });
-        /**
-        @EXPERIMENTAL This example is for demonstration purposes only. 
-        USE AT YOUR OWN RISK and DO NOT use it in a production environment. 
-        DO NOT send any mainnet tokens to the accounts involved, as this may result in the loss of funds. 
-        We are not responsible for any loss of digital assets.
-        It is risky and unsafe to have private key in cleartext in the machine.
-
-        To use this feature, 
-        - replace the case below with the the values above for BlockchainFunction.TransferToken
-        - uncomment line 54, 46, and 27
-        - add relevant env
-        - sample query: "transfer 1 native token to 0x1cA1304F2cA3e5A1e45fD2b64EcD83EB58a420Ab",
-
-        case BlockchainFunction.TransferToken:
-          return await this.tokenService.transfer(
-            functionArgs.to,
-            functionArgs.amount.toString(),
-            functionArgs.contractAddress
-          );
-        */
         case BlockchainFunction.WrapToken:
           return await Token.wrap({
             amount: functionArgs.amount,
