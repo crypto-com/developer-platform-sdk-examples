@@ -27,6 +27,7 @@ import { Alert, Button } from "antd";
 export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
+  const [context, setContext] = useState<Array<{ role: string; content: string }>>([]);
 
   const chatStartDate = getChatStartDate(messages);
 
@@ -51,36 +52,63 @@ export function Chatbot() {
       );
 
       if (lastBotIdx !== -1) {
-        newMessages[lastBotIdx] = {
-          ...newMessages[lastBotIdx],
-          text: response.status || "Unknown status",
-          isLoading: false,
-        };
+        const result = response.results[0]?.data;
+        if (result) {
+          if ('magicLink' in result) {
+            newMessages[lastBotIdx] = {
+              text: result.magicLink as string,
+              type: InputType.Bot,
+              isJson: false,
+              isLoading: false,
+              timestamp: new Date(),
+              isMagicLink: true,
+            };
+          } else {
+            newMessages[lastBotIdx] = {
+              text: JSON.stringify(result, null, 2),
+              type: InputType.Bot,
+              isJson: true,
+              isLoading: false,
+              timestamp: new Date(),
+            };
+          }
 
-        const data = response.results[0]?.data;
-        const signature = response.results[0]?.data as { magicLink: string };
+          if (response.results[0]?.status) {
+            newMessages.push({
+              text: response.results[0].status,
+              type: InputType.Bot,
+              isJson: false,
+              isLoading: false,
+              timestamp: new Date(),
+            });
+          }
 
-        if (signature.magicLink) {
-          newMessages.push({
-            text: signature.magicLink,
-            type: InputType.Bot,
-            isJson: false,
+          if (response.finalResponse) {
+            newMessages.push({
+              text: response.finalResponse,
+              type: InputType.Bot,
+              isJson: false,
+              isLoading: false,
+              timestamp: new Date(),
+            });
+          }
+        } else {
+          newMessages[lastBotIdx] = {
+            ...newMessages[lastBotIdx],
+            text: response.finalResponse || response.status || "Unknown status",
             isLoading: false,
-            timestamp: new Date(),
-            isMagicLink: true,
-          });
-        } else if (data) {
-          newMessages.push({
-            text: JSON.stringify(data, null, 2),
-            type: InputType.Bot,
-            isJson: true,
-            isLoading: false,
-            timestamp: new Date(),
-          });
+          };
         }
       }
       return newMessages;
     });
+
+    if (response.context) {
+      setContext(prevContext => {
+        const newContext = [...prevContext, ...response.context];
+        return newContext.length > 10 ? newContext.slice(-10) : newContext;
+      });
+    }
   };
 
   const handleError = (error: ChainAiApiResponseError): void => {
@@ -113,7 +141,7 @@ export function Chatbot() {
     setInput("");
 
     try {
-      const response = await chainAiInstance.sendQuery(userInput);
+      const response = await chainAiInstance.sendQuery(userInput, context);
       console.log(response);
       updateBotResponse(response);
     } catch (e) {
@@ -134,7 +162,6 @@ export function Chatbot() {
             <MessageLabel type={msg.type} isJson={msg.isJson} />
             <StyledMessageComponent message={msg}>
               {msg.isMagicLink ? (
-                // Render a custom alert box with a button for magicLink
                 <Alert
                   message="Transaction Ready"
                   description={

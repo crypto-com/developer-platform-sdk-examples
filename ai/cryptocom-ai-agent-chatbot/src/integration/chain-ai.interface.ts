@@ -7,7 +7,9 @@ export interface ClientConfig {
 export interface ChainAiApiResponse {
   status: string;
   hasErrors: boolean;
+  finalResponse?: string;
   results: Array<{
+    status?: string;
     data: object;
   }>;
   context: Array<{

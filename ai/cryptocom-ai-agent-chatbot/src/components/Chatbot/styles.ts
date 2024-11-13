@@ -78,8 +78,10 @@ export const StyledMessageComponent = styled.div<{ message: Message }>`
 `;
 
 export const StyledMessageContent = styled.div<{ isJson?: boolean }>`
-  padding: ${(props) => (props.isJson ? "10px" : "25px 10px 10px 10px")};
-  border-radius: 4px;
+  padding: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ${props => props.isJson ? 'monospace' : 'inherit'};
 `;
 
 export const StyledJsonMessageHeader = styled.div`

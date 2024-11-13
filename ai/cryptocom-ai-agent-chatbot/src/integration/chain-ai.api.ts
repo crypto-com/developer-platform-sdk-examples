@@ -22,7 +22,10 @@ export const chainAiInstance = {
    * const response = await chainAiInstance.sendQuery('Send 1USDC to ADDRESS', axiosInstance);
    * console.log('Chain AI Response:', response);
    */
-  sendQuery: async (query: string): Promise<ChainAiApiResponse> => {
+  sendQuery: async (
+    query: string, 
+    context: Array<{ role: string; content: string }> = []
+  ): Promise<ChainAiApiResponse> => {
     const url = `/api/v1/cdc-ai-agent-service/query`;
 
     try {
@@ -32,6 +35,7 @@ export const chainAiInstance = {
           openAI: {
             apiKey: import.meta.env.VITE_OPEN_AI_KEY,
           },
+          context,
         },
       });
       const aiResponse = response.data;
