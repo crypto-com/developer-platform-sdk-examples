@@ -1,0 +1,25 @@
+{
+    "name": "cronos-zkevm-hardhat-boilerplate",
+    "version": "1.0.0",
+    "description": "The goal of this repository is to demonstrate basic use of the Tethys release of the Cronos zkEVM testnet network (as of May 2024).",
+    "main": "index.js",
+    "scripts": {
+        "compile": "hardhat compile",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "dotenv": "^16.4.5",
+        "ethers": "^6.12.1",
+        "zksync-ethers": "^6.9.0"
+    },
+    "devDependencies": {
+        "@matterlabs/hardhat-zksync": "^1.1.0",
+        "@matterlabs/hardhat-zksync-verify": "^1.6.0",
+        "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+        "@openzeppelin/contracts": "^4.9.5",
+        "@openzeppelin/contracts-upgradeable": "^4.9.5",
+        "hardhat": "^2.22.4"
+    }
+}
