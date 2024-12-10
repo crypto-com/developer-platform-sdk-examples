@@ -221,6 +221,8 @@ export class AIAgentService {
             },
           };
         }
+        case BlockchainFunction.GetErc20Balance:
+          return await Token.getERC20TokenBalance(functionArgs.address, functionArgs.contractAddress);
         default:
           return {
             status: Status.Failed,
