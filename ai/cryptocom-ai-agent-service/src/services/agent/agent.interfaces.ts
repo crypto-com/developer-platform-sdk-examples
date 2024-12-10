@@ -90,6 +90,7 @@ export enum BlockchainFunction {
   SwapToken = 'swapToken',
   GetCurrentTime = 'getCurrentTime',
   FunctionNotFound = 'functionNotFound',
+  GetErc20Balance = 'getErc20Balance',
 }
 
 export interface BlockchainFunctionResponse<T> {

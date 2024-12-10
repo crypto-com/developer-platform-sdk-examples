@@ -12,6 +12,7 @@ import {
   sendTransactionParameters,
   wrapTokenParameters,
   getCurrentTimeParameters,
+  getErc20BalanceParameters,
 } from '../../helpers/chain-ai.helpers.js';
 import { BlockchainFunction } from './agent.interfaces.js';
 
@@ -113,6 +114,14 @@ export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
       name: BlockchainFunction.GetCurrentTime,
       description: 'Get the current local and UTC time',
       parameters: getCurrentTimeParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.GetErc20Balance,
+      description: 'Get the balance of an ERC20 token for a specific wallet address',
+      parameters: getErc20BalanceParameters,
     },
   },
 ];
@@ -277,6 +286,24 @@ export const GEMINI_TOOLS = {
           },
         },
         required: ['tag'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetErc20Balance,
+      description: 'Get the balance of an ERC20 token for a specific wallet address',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          address: {
+            type: 'STRING',
+            description: 'The wallet address to check balance for',
+          },
+          contractAddress: {
+            type: 'STRING',
+            description: 'The ERC20 token contract address',
+          },
+        },
+        required: ['address', 'contractAddress'],
       },
     },
   ],
