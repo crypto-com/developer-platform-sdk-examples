@@ -139,3 +139,18 @@ export const getCurrentTimeParameters = {
   type: 'object',
   properties: {},
 };
+
+export const getErc20BalanceParameters = {
+  type: 'object',
+  properties: {
+    address: {
+      type: 'string',
+      description: 'The wallet address to check balance for',
+    },
+    contractAddress: {
+      type: 'string',
+      description: `The ERC20 token contract address or token symbol. Symbol to token mapping: ${JSON.stringify(TOKEN_SYMBOLS_ADDRESSES)}`,
+    },
+  },
+  required: ['address', 'contractAddress'],
+};
