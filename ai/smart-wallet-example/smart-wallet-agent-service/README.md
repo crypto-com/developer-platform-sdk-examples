@@ -1,7 +1,8 @@
-# Smart Wallet Service
+# Smart Wallet Service 
 
 This repository demonstrates the implementation of a **Smart Wallet Service** that integrates with the **Cronos zkEVM** blockchain. The service enables on-chain transactions, wallet management, AI-driven copy trading, and event listening.
 
+**note: All the features are experimental and not intended for production
 ---
 
 ## Features
