@@ -38,6 +38,9 @@ export class GeminiService implements LLMService {
   private lastAssistantMessage: AIMessageResponse | null = null;
 
   constructor(config: LLMConfig) {
+    if (!config.apiKey) {
+      throw new Error('Gemini API key is required');
+    }
     this.apiKey = config.apiKey;
     this.model = config.model || 'gemini-1.5-pro';
     this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -187,5 +190,11 @@ export class GeminiService implements LLMService {
       logger.error('Error in Gemini generateFinalResponse:', error);
       throw new Error(`Gemini API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  async generateResponse(context: QueryContext[]): Promise<AIMessageResponse> {
+    // Convert existing interpretUserQuery implementation to match new interface
+    const lastMessage = context[context.length - 1];
+    return this.interpretUserQuery(lastMessage.content, context);
   }
 }

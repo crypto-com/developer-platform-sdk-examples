@@ -24,6 +24,7 @@ import {
 import { LLMService } from '../llm/llm.interface.js';
 import { OpenAIService } from '../llm/openai.service.js';
 import { GeminiService } from '../llm/gemini.service.js';
+import { VertexAIService } from '../llm/vertexai.service.js';
 
 /**
  * Initialize Developer Platform SDK
@@ -133,6 +134,11 @@ export class AIAgentService {
           throw new Error('Gemini configuration is required when using Gemini provider');
         }
         return new GeminiService(this.options.gemini);
+      case LLMProvider.VertexAI:
+        if (!this.options.vertexAI) {
+          throw new Error('Vertex AI configuration is required when using Vertex AI provider');
+        }
+        return new VertexAIService(this.options.vertexAI);
       default:
         throw new Error(`Unsupported LLM provider: ${provider}`);
     }

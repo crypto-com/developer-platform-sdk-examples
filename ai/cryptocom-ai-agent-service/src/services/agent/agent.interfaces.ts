@@ -1,6 +1,7 @@
 export enum LLMProvider {
   OpenAI = 'openai',
   Gemini = 'gemini',
+  VertexAI = 'vertexai',
 }
 
 export interface OpenAIOptions {
@@ -15,6 +16,7 @@ export interface ExplorerKeys {
 export interface Options {
   openAI?: OpenAIOptions;
   gemini?: GeminiOptions;
+  vertexAI?: VertexAIOptions;
   llmProvider?: LLMProvider;
   chainId: number;
   context: QueryContext[];
@@ -244,5 +246,11 @@ export interface TimeData {
 
 export interface GeminiOptions {
   apiKey: string;
+  model?: string;
+}
+
+export interface VertexAIOptions {
+  projectId: string;
+  location?: string;
   model?: string;
 }
