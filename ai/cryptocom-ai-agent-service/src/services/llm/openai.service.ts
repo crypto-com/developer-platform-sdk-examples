@@ -113,4 +113,9 @@ export class OpenAIService implements LLMService {
       return 'Error generating final response';
     }
   }
+
+  async generateResponse(context: QueryContext[]): Promise<AIMessageResponse> {
+    const lastMessage = context[context.length - 1];
+    return this.interpretUserQuery(lastMessage.content, context);
+  }
 }

@@ -7,9 +7,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Check both API keys after load_dotenv()
+# Check API keys after load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 google_api_key = os.getenv("GOOGLE_API_KEY")
+google_project_id = os.getenv("GOOGLE_PROJECT_ID")
 
 if not api_key:
     print("Error: OPENAI_API_KEY not found in environment variables.")
@@ -24,6 +25,13 @@ if not google_api_key:
     exit(1)
 else:
     print("✓ GOOGLE_API_KEY has been imported successfully")
+
+if not google_project_id:
+    print("Error: GOOGLE_PROJECT_ID not found in environment variables.")
+    print("Please make sure you have set the GOOGLE_PROJECT_ID in your .env file.")
+    exit(1)
+else:
+    print("✓ GOOGLE_PROJECT_ID has been imported successfully")
 
 print()  # Add blank line after checks
 
@@ -46,6 +54,12 @@ def send_query(query: str, context: list = None, provider: str = "gemini") -> di
     provider_options = {}
     if provider == "openai":
         provider_options["openAI"] = {"apiKey": os.getenv("OPENAI_API_KEY")}
+    elif provider == "vertexai":
+        provider_options["vertexAI"] = {
+            "projectId": os.getenv("GOOGLE_PROJECT_ID"),
+            "location": "us-central1",
+            "model": "gemini-2.0-flash-exp",
+        }
     else:  # gemini
         provider_options["gemini"] = {"apiKey": os.getenv("GOOGLE_API_KEY")}
 
@@ -74,10 +88,12 @@ def main():
 
     # Ask for provider choice at startup - this will be fixed for the session
     while True:
-        provider = input("Choose your AI provider (openai/gemini): ").strip().lower()
-        if provider in ["openai", "gemini"]:
+        provider = (
+            input("Choose your AI provider (openai/gemini/vertexai): ").strip().lower()
+        )
+        if provider in ["openai", "gemini", "vertexai"]:
             break
-        print("Invalid choice. Please enter 'openai' or 'gemini'")
+        print("Invalid choice. Please enter 'openai', 'gemini', or 'vertexai'")
 
     print("\nType 'quit' to exit")
     print("Use up/down arrow keys to navigate command history")
