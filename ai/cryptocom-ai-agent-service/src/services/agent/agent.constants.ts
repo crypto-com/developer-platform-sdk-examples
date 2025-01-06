@@ -13,6 +13,8 @@ import {
   wrapTokenParameters,
   getCurrentTimeParameters,
   getErc20BalanceParameters,
+  resolveCronosIdParameters,
+  reverseResolveCronosIdParameters,
 } from '../../helpers/chain-ai.helpers.js';
 import { BlockchainFunction } from './agent.interfaces.js';
 
@@ -122,6 +124,22 @@ export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
       name: BlockchainFunction.GetErc20Balance,
       description: 'Get the balance of an ERC20 token for a specific wallet address',
       parameters: getErc20BalanceParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.ResolveCronosId,
+      description: 'Resolve a CronosId (.cro) to its corresponding wallet address',
+      parameters: resolveCronosIdParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.ReverseResolveCronosId,
+      description: 'Resolve a wallet address to its corresponding CronosId (.cro)',
+      parameters: reverseResolveCronosIdParameters,
     },
   },
 ];
@@ -304,6 +322,34 @@ export const GEMINI_TOOLS = {
           },
         },
         required: ['address', 'contractAddress'],
+      },
+    },
+    {
+      name: BlockchainFunction.ResolveCronosId,
+      description: 'Resolve a CronosId (.cro) to its corresponding wallet address',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          cronosId: {
+            type: 'STRING',
+            description: 'The CronosId to resolve (must end with .cro)',
+          },
+        },
+        required: ['cronosId'],
+      },
+    },
+    {
+      name: BlockchainFunction.ReverseResolveCronosId,
+      description: 'Resolve a wallet address to its corresponding CronosId (.cro)',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          address: {
+            type: 'STRING',
+            description: 'The wallet address to resolve',
+          },
+        },
+        required: ['address'],
       },
     },
   ],

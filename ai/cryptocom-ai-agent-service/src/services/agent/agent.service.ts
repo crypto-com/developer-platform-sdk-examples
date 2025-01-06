@@ -6,6 +6,7 @@ import {
   Token,
   Transaction,
   Wallet,
+  CronosId,
 } from '@crypto.com/developer-platform-client';
 import { validateFunctionArgs } from '../../helpers/agent.helpers.js';
 import { logger } from '../../helpers/logger.helper.js';
@@ -25,9 +26,6 @@ import { LLMService } from '../llm/llm.interface.js';
 import { OpenAIService } from '../llm/openai.service.js';
 import { GeminiService } from '../llm/gemini.service.js';
 
-/**
- * Initialize Developer Platform SDK
- */
 Client.init({
   chain: CronosZkEvm.Testnet,
   apiKey: process.env.EXPLORER_API_KEY!,
@@ -150,7 +148,7 @@ export class AIAgentService {
     functionName: BlockchainFunction,
     functionArgs: FunctionArgs
   ): Promise<FunctionCallResponse> {
-    try {
+    try {      
       validateFunctionArgs(functionArgs);
 
       switch (functionName) {
@@ -222,7 +220,30 @@ export class AIAgentService {
           };
         }
         case BlockchainFunction.GetErc20Balance:
-          return await Token.getERC20TokenBalance(functionArgs.address, functionArgs.contractAddress);
+          validateFunctionArgs(functionArgs);
+          return await Token.getERC20TokenBalance(functionArgs.address, functionArgs.contractAddress, 'latest');
+        case BlockchainFunction.ResolveCronosId: {
+          validateFunctionArgs(functionArgs);
+          const addressResponse = await CronosId.forwardResolve(functionArgs.cronosId);
+          return {
+            status: Status.Success,
+            data: {
+              cronosId: functionArgs.cronosId,
+              resolvedAddress: addressResponse.data.resolvedAddress,
+            },
+          };
+        }
+        case BlockchainFunction.ReverseResolveCronosId: {
+          validateFunctionArgs(functionArgs);
+          const reverseResponse = await CronosId.reverseResolve(functionArgs.address);
+          return {
+            status: Status.Success,
+            data: {
+              address: functionArgs.address,
+              resolvedName: reverseResponse.data.resolvedName,
+            },
+          };
+        }
         default:
           return {
             status: Status.Failed,

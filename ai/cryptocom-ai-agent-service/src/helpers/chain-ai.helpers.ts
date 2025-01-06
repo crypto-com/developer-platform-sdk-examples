@@ -154,3 +154,25 @@ export const getErc20BalanceParameters = {
   },
   required: ['address', 'contractAddress'],
 };
+
+export const resolveCronosIdParameters = {
+  type: 'object',
+  properties: {
+    cronosId: {
+      type: 'string',
+      description: 'The CronosId to resolve (must end with .cro)',
+    },
+  },
+  required: ['cronosId'],
+};
+
+export const reverseResolveCronosIdParameters = {
+  type: 'object',
+  properties: {
+    address: {
+      type: 'string',
+      description: 'The wallet address to resolve to a CronosId',
+    },
+  },
+  required: ['address'],
+};

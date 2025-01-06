@@ -50,6 +50,7 @@ export interface FunctionArgs {
   fromContractAddress: string;
   toContractAddress: string;
   name: string;
+  cronosId: string;
 }
 
 export enum Symbol {
@@ -91,6 +92,8 @@ export enum BlockchainFunction {
   GetCurrentTime = 'getCurrentTime',
   FunctionNotFound = 'functionNotFound',
   GetErc20Balance = 'getErc20Balance',
+  ResolveCronosId = 'resolveCronosId',
+  ReverseResolveCronosId = 'reverseResolveCronosId',
 }
 
 export interface BlockchainFunctionResponse<T> {
