@@ -3,6 +3,7 @@ import { ChatCompletionMessageParam } from 'openai/resources/index.js';
 import { logger } from '../../helpers/logger.helper.js';
 import { OpenAIModelError, OpenAIUnauthorizedError } from '../../lib/errors/service.errors.js';
 import { SmartWalletService } from '../smartwallet/smartwallet.service.js';
+import { SSOWalletService } from '../ssowallet/ssowallet.service.js';
 import { CONTENT, MAX_CONTEXT_LENGTH, TOOLS } from './agent.constants.js';
 import {
   AIMessageResponse,
@@ -13,6 +14,7 @@ import {
   QueryContext,
   Role,
   Status,
+  TransferArgs,
 } from './agent.interfaces.js';
 import { validateArgs } from './agent.helpers.js';
 
@@ -25,6 +27,7 @@ export class AIAgentService {
   private options: Options;
   private client: OpenAI;
   private smartWalletService: SmartWalletService;
+  private ssoWalletService: SSOWalletService;
   private readonly FUNCTION_REGISTRY: Record<string, (args: FunctionArgs) => Promise<FunctionCallResponse>>;
 
   /**
@@ -34,7 +37,11 @@ export class AIAgentService {
     this.options = options;
     this.client = new OpenAI({ apiKey: options.openAI.apiKey });
     this.smartWalletService = new SmartWalletService();
+    this.ssoWalletService = new SSOWalletService();
     this.FUNCTION_REGISTRY = {
+      [Function.CreateSSOWallet]: async () => this.ssoWalletService.createWallet(),
+      [Function.CreateSSOSession]: async (args) => this.ssoWalletService.createSSOSession(args),
+      [Function.TransferFunds]: async (args) => this.ssoWalletService.transfer(args as TransferArgs),
       [Function.AccountRequest]: async () => this.smartWalletService.accountRequest(),
       [Function.InitCopyTrade]: async (args) => this.smartWalletService.initCopyTrade(args.from),
     };

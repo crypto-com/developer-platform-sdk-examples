@@ -32,6 +32,12 @@ export interface FunctionArgs {
   from: string;
 }
 
+export interface TransferArgs {
+  from?: string;
+  to: string;
+  amount: string;
+}
+
 export interface QueryContext {
   role: Role;
   content: string;
@@ -53,6 +59,9 @@ export enum Function {
   FunctionNotFound = 'functionNotFound',
   AccountRequest = 'generateAndAuthorizeWallet',
   InitCopyTrade = 'initiateCopyTrading',
+  CreateSSOWallet = 'createSSOWallet',
+  CreateSSOSession = 'createSSOSession',
+  TransferFunds = 'transferFunds'
 }
 
 export interface FunctionResponse<T> {
@@ -69,4 +78,23 @@ export enum Status {
 export interface FunctionCallResponse {
   status: Status;
   data: object;
+}
+
+export interface SSOWalletArgs {
+  passKeyId?: string;
+}
+
+export interface SSOSessionArgs {
+  expiry: string;
+  feeLimit: string;
+  transfers?: {
+    to: string;
+    valueLimit: string;
+  }[];
+}
+
+export interface TransferArgs {
+  to: string;
+  amount: string;
+  token?: string;
 }
