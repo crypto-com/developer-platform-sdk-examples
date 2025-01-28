@@ -12,6 +12,18 @@ export class OpenAIModelError extends BaseError {
   }
 }
 
+export class DeepSeekUnauthorizedError extends BaseError {
+  constructor(message: string) {
+    super(`${message}`);
+  }
+}
+
+export class DeepSeekModelError extends BaseError {
+  constructor(message: string) {
+    super(`${message}`);
+  }
+}
+
 export class InputError extends BaseError {
   constructor(message: string) {
     super(`${message}`);
