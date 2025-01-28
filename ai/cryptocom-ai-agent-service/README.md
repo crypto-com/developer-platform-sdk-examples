@@ -109,6 +109,7 @@ The architecture:
 
 ### Query Route
 
+#### Querying with OpenAI Model
 - **Endpoint**: `/api/v1/cdc-ai-agent-service/query`
 - **Method**: `POST`
 - **Description**: Takes a natural language query, maps it to a blockchain command via OpenAI, and executes the command.
@@ -120,8 +121,50 @@ The architecture:
       "query": "get latest block",
       "options": {
         "openAI": {
-          "apiKey": "<your-openai-api-key>"
+          "apiKey": "<your-openai-api-key>",
+          "model": "gpt-4"
         },
+        "llmProvider": "openai",
+        "chainId": 282,
+        "explorer": {
+          "apiKey": "<your-explorer-api-key>"
+        },
+      }
+    }
+    ```
+
+- **Response Example**:
+
+    ```json
+    {
+      "status": "success",
+      "result": {
+        "action": "getBlock",
+        "message": "Retrieved latest block",
+        "data": {
+          "blockNumber": 123456,
+          "timestamp": "2023-09-12T10:12:15Z"
+        }
+      }
+    }
+    ```
+
+#### Querying with DeepSeek Model
+- **Endpoint**: `/api/v1/cdc-ai-agent-service/query`
+- **Method**: `POST`
+- **Description**: Takes a natural language query, maps it to a blockchain command via DeepSeek, and executes the command.
+
+- **Request Body Example**:
+
+    ```json
+    {
+      "query": "get latest block",
+      "options": {
+        "deepSeek": {
+          "apiKey": "<your-deepseek-api-key>",
+          "model": "deepseek-chat"
+        },
+        "llmProvider": "deepseek",
         "chainId": 282,
         "explorer": {
           "apiKey": "<your-explorer-api-key>"

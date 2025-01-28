@@ -2,10 +2,10 @@ import { NextFunction, Request, Response } from 'express';
 import { getErrorMessage } from '../helpers/errors.helpers.js';
 import { InputError, OpenAIUnauthorizedError } from '../lib/errors/service.errors.js';
 import { HTTP_CODES, HTTP_MESSAGES, ResponseError } from '../lib/interfaces/api.interface.js';
+import { Status } from '../services/agent/agent.interfaces.js';
 import { HealthCheckResponse, QueryResponse } from '../services/query/query.interfaces.js';
 import { QueryService } from '../services/query/query.service.js';
 import { HTTP_STATUS } from './../lib/interfaces/api.interface.js';
-import { Status } from '../services/agent/agent.interfaces.js';
 
 /**
  * Controller function to handle a query request.
