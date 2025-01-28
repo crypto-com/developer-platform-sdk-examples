@@ -1,33 +1,65 @@
-import { useState } from "react";
-import { ArrowUpOutlined } from "@ant-design/icons";
-import { chainAiInstance } from "../../integration/chain-ai.api";
-import {
-  StyledChatArea,
-  StyledMessageContainer,
-  StyledMessageComponent,
-  StyledChatBotContainer,
-  StyledInputContainer,
-  StyledTextArea,
-  StyledSendButton,
-  StyledDateLabel,
-  StyledDateLabelContainer,
-  StyledDisclaimer,
-} from "./styles";
-import { InputType, Message } from "./interfaces";
-import { MessageLabel } from "./MessageLabel";
-import { MessageContent } from "./MessageContent";
-import { JsonMessage } from "./JsonMessage";
+import { ArrowUpOutlined } from '@ant-design/icons';
+import { Alert, Button, Select } from 'antd';
+import { useState } from 'react';
+import { getChatStartDate } from '../../helpers/chat.helpers';
+import { chainAiInstance } from '../../integration/chain-ai.api';
 import {
   ChainAiApiResponse,
   ChainAiApiResponseError,
-} from "../../integration/chain-ai.interface";
-import { getChatStartDate } from "../../helpers/chat.helpers";
-import { Alert, Button } from "antd";
+} from '../../integration/chain-ai.interface';
+import { InputType, Message } from './interfaces';
+import { JsonMessage } from './JsonMessage';
+import { MessageContent } from './MessageContent';
+import { MessageLabel } from './MessageLabel';
+import {
+  StyledChatArea,
+  StyledChatBotContainer,
+  StyledDateLabel,
+  StyledDateLabelContainer,
+  StyledDisclaimer,
+  StyledInputContainer,
+  StyledMessageComponent,
+  StyledMessageContainer,
+  StyledModelSelector,
+  StyledSendButton,
+  StyledTextArea,
+} from './styles';
+
+export interface LLMConfig {
+  llmProvider: LLMProvider;
+  model: string;
+  label: string;
+}
+
+export enum LLMProvider {
+  OpenAI = 'openai',
+  Gemini = 'gemini',
+  VertexAI = 'vertexai',
+  DeepSeek = 'deepseek',
+}
+
+const LLM_OPTIONS: LLMConfig[] = [
+  {
+    llmProvider: LLMProvider.DeepSeek,
+    model: 'deepseek-chat',
+    label: 'Deepseek-V3',
+  },
+  {
+    llmProvider: LLMProvider.DeepSeek,
+    model: 'deepseek-reasoner',
+    label: 'Deepseek-R1',
+  },
+  { llmProvider: LLMProvider.OpenAI, model: 'gpt-4o', label: 'GPT-4o' },
+  { llmProvider: LLMProvider.OpenAI, model: 'gpt-4', label: 'GPT-4' },
+  { llmProvider: LLMProvider.OpenAI, model: 'gpt-3.5', label: 'GPT-3.5' },
+  { llmProvider: LLMProvider.Gemini, model: 'gemini', label: 'Gemini' },
+];
 
 export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [context, setContext] = useState<Array<{ role: string; content: string }>>([]);
+  const [selectedLLM, setSelectedLLM] = useState<LLMConfig>(LLM_OPTIONS[0]);
 
   const chatStartDate = getChatStartDate(messages);
 
@@ -141,7 +173,11 @@ export function Chatbot() {
     setInput("");
 
     try {
-      const response = await chainAiInstance.sendQuery(userInput, context);
+      const response = await chainAiInstance.sendQuery(
+        userInput,
+        context,
+        selectedLLM
+      );
       console.log(response);
       updateBotResponse(response);
     } catch (e) {
@@ -193,6 +229,19 @@ export function Chatbot() {
           placeholder="Message AI Agent"
           autoSize={{ minRows: 1, maxRows: 4 }}
         />
+        <StyledModelSelector>
+          <Select
+            value={selectedLLM.model}
+            onChange={(value: string) => {
+              const newLLM = LLM_OPTIONS.find((opt) => opt.model === value);
+              if (newLLM) setSelectedLLM(newLLM);
+            }}
+            options={LLM_OPTIONS.map((opt) => ({
+              value: opt.model,
+              label: opt.label,
+            }))}
+          />
+        </StyledModelSelector>
         <StyledSendButton onClick={handleSend} icon={<ArrowUpOutlined />} />
       </StyledInputContainer>
       <StyledDisclaimer>Powered by Crypto.com</StyledDisclaimer>

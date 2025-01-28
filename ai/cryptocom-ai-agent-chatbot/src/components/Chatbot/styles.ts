@@ -159,9 +159,8 @@ export const StyledInputContainer = styled.div`
   background: #f4f4f4;
   border-radius: 25px;
   padding: 15px 20px;
-  gap: 1.5rem;
+  gap: 1rem;
   position: relative;
-  overflow: hidden;
 `;
 
 export const StyledDisclaimer = styled.div`
@@ -177,7 +176,7 @@ export const StyledTextArea = styled(Input.TextArea)`
   outline: none;
   background: transparent;
   border-radius: 26px;
-  padding-right: 3rem;
+  padding-right: 190px;
   overflow: auto;
 
   &:hover,
@@ -237,4 +236,31 @@ export const StyledDateLabel = styled.span`
   margin: 20px;
   width: auto;
   border-radius: 26px;
+`;
+
+export const StyledModelSelector = styled.div`
+  position: absolute;
+  right: 55px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  .ant-select {
+    width: auto;
+    min-width: 120px;
+  }
+
+  .ant-select-selector {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .ant-select-selection-item {
+    font-size: 14px;
+    color: #666;
+  }
+
+  .ant-select-dropdown {
+    min-width: 150px !important;
+  }
 `;
