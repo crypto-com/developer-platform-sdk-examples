@@ -41,7 +41,6 @@ export class DeepSeekService implements LLMService {
   }
 
   public async interpretUserQuery(query: string, context: QueryContext[]): Promise<AIMessageResponse> {
-    console.log('DEEPSEEK - deepseek.service.ts:44');
     try {
       const messages: ChatCompletionMessageParam[] = [
         this.createMessage('system', CONTENT),

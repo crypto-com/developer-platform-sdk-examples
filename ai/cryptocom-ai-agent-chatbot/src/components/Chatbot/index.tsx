@@ -50,15 +50,50 @@ const LLM_OPTIONS: LLMConfig[] = [
     label: 'Deepseek-R1',
   },
   { llmProvider: LLMProvider.OpenAI, model: 'gpt-4o', label: 'GPT-4o' },
+  {
+    llmProvider: LLMProvider.OpenAI,
+    model: 'gpt-4o-mini',
+    label: 'GPT-4o-Mini',
+  },
+  {
+    llmProvider: LLMProvider.OpenAI,
+    model: 'gpt-4-turbo',
+    label: 'GPT-4-Turbo',
+  },
   { llmProvider: LLMProvider.OpenAI, model: 'gpt-4', label: 'GPT-4' },
-  { llmProvider: LLMProvider.OpenAI, model: 'gpt-3.5', label: 'GPT-3.5' },
-  { llmProvider: LLMProvider.Gemini, model: 'gemini', label: 'Gemini' },
+  {
+    llmProvider: LLMProvider.OpenAI,
+    model: 'gpt-3.5-turbo',
+    label: 'GPT-3.5-Turbo',
+  },
+  {
+    llmProvider: LLMProvider.Gemini,
+    model: 'gemini-2.0-flash-exp',
+    label: 'Gemini-2.0-Flash-Exp',
+  },
+  {
+    llmProvider: LLMProvider.Gemini,
+    model: 'gemini-1.5-flash',
+    label: 'Gemini-1.5-Flash',
+  },
+  {
+    llmProvider: LLMProvider.Gemini,
+    model: 'gemini-1.5-pro',
+    label: 'Gemini-1.5-Pro',
+  },
+  {
+    llmProvider: LLMProvider.Gemini,
+    model: 'gemini-1.0-pro',
+    label: 'Gemini-1.0-Pro',
+  },
 ];
 
 export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState<string>("");
-  const [context, setContext] = useState<Array<{ role: string; content: string }>>([]);
+  const [input, setInput] = useState<string>('');
+  const [context, setContext] = useState<
+    Array<{ role: string; content: string }>
+  >([]);
   const [selectedLLM, setSelectedLLM] = useState<LLMConfig>(LLM_OPTIONS[0]);
 
   const chatStartDate = getChatStartDate(messages);
@@ -127,7 +162,7 @@ export function Chatbot() {
         } else {
           newMessages[lastBotIdx] = {
             ...newMessages[lastBotIdx],
-            text: response.finalResponse || response.status || "Unknown status",
+            text: response.finalResponse || response.status || 'Unknown status',
             isLoading: false,
           };
         }
@@ -136,7 +171,7 @@ export function Chatbot() {
     });
 
     if (response.context) {
-      setContext(prevContext => {
+      setContext((prevContext) => {
         const newContext = [...prevContext, ...response.context];
         return newContext.length > 10 ? newContext.slice(-10) : newContext;
       });
@@ -158,7 +193,7 @@ export function Chatbot() {
   };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleSend();
     }
@@ -169,8 +204,8 @@ export function Chatbot() {
     if (!userInput) return;
 
     addMessage(userInput, InputType.User, false);
-    addMessage("Typing...", InputType.Bot, true);
-    setInput("");
+    addMessage('Typing...', InputType.Bot, true);
+    setInput('');
 
     try {
       const response = await chainAiInstance.sendQuery(
@@ -182,7 +217,7 @@ export function Chatbot() {
       updateBotResponse(response);
     } catch (e) {
       const error = e as ChainAiApiResponseError;
-      console.error("Failed to send query:", e);
+      console.error('Failed to send query:', e);
       handleError(error);
     }
   };
