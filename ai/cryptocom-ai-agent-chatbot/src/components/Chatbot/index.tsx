@@ -44,11 +44,11 @@ const LLM_OPTIONS: LLMConfig[] = [
     model: 'deepseek-chat',
     label: 'Deepseek-V3',
   },
-  {
-    llmProvider: LLMProvider.DeepSeek,
-    model: 'deepseek-reasoner',
-    label: 'Deepseek-R1',
-  },
+  // {
+  //   llmProvider: LLMProvider.DeepSeek,
+  //   model: 'deepseek-reasoner',
+  //   label: 'Deepseek-R1',
+  // },
   { llmProvider: LLMProvider.OpenAI, model: 'gpt-4o', label: 'GPT-4o' },
   {
     llmProvider: LLMProvider.OpenAI,
