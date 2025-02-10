@@ -13,6 +13,7 @@ import { BaseError } from '../../lib/errors/base.error.js';
 import { DeepSeekService } from '../llm/deepseek.service.js';
 import { GeminiService } from '../llm/gemini.service.js';
 import { LLMService } from '../llm/llm.interface.js';
+import { MistralService } from '../llm/mistral.service.js';
 import { OpenAIService } from '../llm/openai.service.js';
 import { VertexAIService } from '../llm/vertexai.service.js';
 import {
@@ -145,6 +146,11 @@ export class AIAgentService {
           throw new Error('Vertex AI configuration is required when using Vertex AI provider');
         }
         return new VertexAIService(this.options.vertexAI);
+      case LLMProvider.Mistral:
+        if (!this.options.mistral) {
+          throw new Error('Mistral configuration is required when using Mistral provider');
+        }
+        return new MistralService(this.options.mistral);
       default:
         throw new Error(`Unsupported LLM provider: ${provider}`);
     }

@@ -24,6 +24,18 @@ export class DeepSeekModelError extends BaseError {
   }
 }
 
+export class MistralUnauthorizedError extends BaseError {
+  constructor(message: string) {
+    super(`${message}`);
+  }
+}
+
+export class MistralModelError extends BaseError {
+  constructor(message: string) {
+    super(`${message}`);
+  }
+}
+
 export class InputError extends BaseError {
   constructor(message: string) {
     super(`${message}`);

@@ -15,6 +15,9 @@
   },
   "dependencies": {
     "@crypto.com/developer-platform-client": "^1.0.5",
+    "@google-cloud/vertexai": "^0.5.0",
+    "@google/generative-ai": "^0.2.0",
+    "@mistralai/mistralai": "^1.5.0",
     "axios": "1.7.7",
     "cors": "2.8.5",
     "dotenv": "16.4.5",
@@ -27,9 +30,7 @@
     "openai": "4.63.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "5.0.1",
-    "winston": "3.14.2",
-    "@google-cloud/vertexai": "^0.5.0",
-    "@google/generative-ai": "^0.2.0"
+    "winston": "3.14.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.0",
