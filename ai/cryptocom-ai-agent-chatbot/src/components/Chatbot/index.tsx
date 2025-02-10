@@ -47,16 +47,6 @@ const LLM_OPTIONS: LLMConfig[] = [
   },
   {
     llmProvider: LLMProvider.Mistral,
-    model: 'ministral-3b-latest',
-    label: 'Ministral-3b-latest',
-  },
-  {
-    llmProvider: LLMProvider.Mistral,
-    model: 'ministral-8b-latest',
-    label: 'Ministral-8b-latest',
-  },
-  {
-    llmProvider: LLMProvider.Mistral,
     model: 'mistral-large-latest',
     label: 'Mistral-Large-Latest',
   },
@@ -65,7 +55,16 @@ const LLM_OPTIONS: LLMConfig[] = [
     model: 'mistral-small-latest',
     label: 'Mistral-Small-Latest',
   },
-
+  {
+    llmProvider: LLMProvider.Mistral,
+    model: 'ministral-8b-latest',
+    label: 'Ministral-8b-latest',
+  },
+  {
+    llmProvider: LLMProvider.Mistral,
+    model: 'ministral-3b-latest',
+    label: 'Ministral-3b-latest',
+  },
   { llmProvider: LLMProvider.OpenAI, model: 'gpt-4o', label: 'GPT-4o' },
   {
     llmProvider: LLMProvider.OpenAI,
