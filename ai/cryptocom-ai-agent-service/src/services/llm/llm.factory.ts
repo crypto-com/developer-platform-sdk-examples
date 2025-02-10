@@ -2,6 +2,7 @@ import { LLMProvider, Options } from '../agent/agent.interfaces.js';
 import { DeepSeekService } from './deepseek.service.js';
 import { GeminiService } from './gemini.service.js';
 import { LLMService } from './llm.interface.js';
+import { MistralService } from './mistral.service.js';
 import { OpenAIService } from './openai.service.js';
 import { VertexAIService } from './vertexai.service.js';
 
@@ -43,6 +44,12 @@ export function createLLMService(options: Options): LLMService {
         location: options.vertexAI.location,
         model: options.vertexAI.model,
       });
+
+    case LLMProvider.Mistral:
+      if (!options.mistral?.apiKey) {
+        throw new Error('Mistral API key is required');
+      }
+      return new MistralService(options.mistral);
 
     default:
       throw new Error(`Unsupported LLM provider: ${options.llmProvider}`);

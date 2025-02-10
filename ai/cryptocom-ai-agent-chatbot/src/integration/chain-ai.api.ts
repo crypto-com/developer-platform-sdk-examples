@@ -14,6 +14,8 @@ const getProviderApiKey = (provider: string): string | undefined => {
       return import.meta.env.VITE_DEEP_SEEK_KEY;
     case LLMProvider.Gemini:
       return import.meta.env.VITE_GEMINI_KEY;
+    case LLMProvider.Mistral:
+      return import.meta.env.VITE_MISTRAL_KEY;
     default:
       return undefined;
   }
@@ -38,6 +40,13 @@ const optionsBuilder = (llmConfig: LLMConfig): any => {
     case LLMProvider.Gemini:
       return {
         gemini: {
+          apiKey: getProviderApiKey(llmConfig.llmProvider),
+          model: llmConfig.model,
+        },
+      };
+    case LLMProvider.Mistral:
+      return {
+        mistral: {
           apiKey: getProviderApiKey(llmConfig.llmProvider),
           model: llmConfig.model,
         },

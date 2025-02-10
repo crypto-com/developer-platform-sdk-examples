@@ -1,3 +1,4 @@
+import { ToolTypes } from '@mistralai/mistralai/models/components/tooltypes.js';
 import OpenAI from 'openai';
 import {
   SwapTokenParameters,
@@ -5,14 +6,14 @@ import {
   getBalanceParameters,
   getBlockByTagParameters,
   getContractAbiParameters,
+  getCurrentTimeParameters,
+  getErc20BalanceParameters,
   getLatestBlockParameters,
   getTransactionByHash,
   getTransactionStatusParameters,
   getTransactionsByAddressParameters,
   sendTransactionParameters,
   wrapTokenParameters,
-  getCurrentTimeParameters,
-  getErc20BalanceParameters,
 } from '../../helpers/chain-ai.helpers.js';
 import { BlockchainFunction } from './agent.interfaces.js';
 
@@ -308,3 +309,110 @@ export const GEMINI_TOOLS = {
     },
   ],
 };
+
+export const MISTRAL_TOOLS = [
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.TransferToken,
+      description: 'Transfer native token or a token (specified by its contract address) to a recipient address',
+      parameters: sendTransactionParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetBalance,
+      description: 'Get the current balance of specified  wallet addresses',
+      parameters: getBalanceParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetLatestBlock,
+      description: 'Get the latest block height from the Cronos blockchain',
+      parameters: getLatestBlockParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetTransactionsByAddress,
+      description: 'Get the list of transactions for a specified Cronos address',
+      parameters: getTransactionsByAddressParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetContractABI,
+      description: 'Get the ABI of a verified smart contract',
+      parameters: getContractAbiParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetTransactionByHash,
+      description: 'Get the details of a transaction by its hash',
+      parameters: getTransactionByHash,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetBlockByTag,
+      description: 'Get information about block by its number or tag (e.g. "latest", "earliest", "pending")',
+      parameters: getBlockByTagParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetTransactionStatus,
+      description: 'Get the status of a transaction by its hash',
+      parameters: getTransactionStatusParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.CreateWallet,
+      description: 'Create a new random wallet',
+      parameters: createWalletParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.WrapToken,
+      description: 'Wrap a token',
+      parameters: wrapTokenParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.SwapToken,
+      description: 'Swap a token from `fromContractAddress` to `toContractAddress`',
+      parameters: SwapTokenParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetCurrentTime,
+      description: 'Get the current local and UTC time',
+      parameters: getCurrentTimeParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetErc20Balance,
+      description: 'Get the balance of an ERC20 token for a specific wallet address',
+      parameters: getErc20BalanceParameters,
+    },
+  },
+];
