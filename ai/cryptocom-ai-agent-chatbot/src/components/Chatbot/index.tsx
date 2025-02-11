@@ -36,6 +36,7 @@ export enum LLMProvider {
   Gemini = 'gemini',
   VertexAI = 'vertexai',
   DeepSeek = 'deepseek',
+  Mistral = 'mistral',
 }
 
 const LLM_OPTIONS: LLMConfig[] = [
@@ -44,11 +45,26 @@ const LLM_OPTIONS: LLMConfig[] = [
     model: 'deepseek-chat',
     label: 'Deepseek-V3',
   },
-  // {
-  //   llmProvider: LLMProvider.DeepSeek,
-  //   model: 'deepseek-reasoner',
-  //   label: 'Deepseek-R1',
-  // },
+  {
+    llmProvider: LLMProvider.Mistral,
+    model: 'mistral-large-latest',
+    label: 'Mistral-Large-Latest',
+  },
+  {
+    llmProvider: LLMProvider.Mistral,
+    model: 'mistral-small-latest',
+    label: 'Mistral-Small-Latest',
+  },
+  {
+    llmProvider: LLMProvider.Mistral,
+    model: 'ministral-8b-latest',
+    label: 'Ministral-8b-latest',
+  },
+  {
+    llmProvider: LLMProvider.Mistral,
+    model: 'ministral-3b-latest',
+    label: 'Ministral-3b-latest',
+  },
   { llmProvider: LLMProvider.OpenAI, model: 'gpt-4o', label: 'GPT-4o' },
   {
     llmProvider: LLMProvider.OpenAI,

@@ -2,8 +2,8 @@ import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources/index.js';
 import { logger } from '../../helpers/logger.helper.js';
 import { OpenAIModelError, OpenAIUnauthorizedError } from '../../lib/errors/service.errors.js';
-import { AIMessageResponse, FunctionCallResponse, QueryContext, Role } from '../agent/agent.interfaces.js';
 import { CONTENT, TOOLS } from '../agent/agent.constants.js';
+import { AIMessageResponse, FunctionCallResponse, QueryContext, Role } from '../agent/agent.interfaces.js';
 import { LLMConfig, LLMService } from './llm.interface.js';
 
 type OpenAIRole = 'system' | 'user' | 'assistant' | 'tool' | 'function';
@@ -112,10 +112,5 @@ export class OpenAIService implements LLMService {
       logger.error('Error generating final response:', e);
       return 'Error generating final response';
     }
-  }
-
-  async generateResponse(context: QueryContext[]): Promise<AIMessageResponse> {
-    const lastMessage = context[context.length - 1];
-    return this.interpretUserQuery(lastMessage.content, context);
   }
 }
