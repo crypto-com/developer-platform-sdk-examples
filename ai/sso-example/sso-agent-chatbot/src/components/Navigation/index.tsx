@@ -1,4 +1,4 @@
-import { SSOButton } from "../../sso/SSOButton";
+import { Passkey } from "../../sso/components/passkey";
 import {
   StyledSidebar,
   StyledLogo,
@@ -22,7 +22,6 @@ export function Navigation() {
           <FormOutlined />
         </StyledCreateButton>
       </StyledLogoContainer>
-      <SSOButton /> 
       <StyledButton
         onClick={() => console.log("Button 1 clicked")}
         icon={<BlockOutlined />}
@@ -41,6 +40,7 @@ export function Navigation() {
       >
         Get Block Status
       </StyledButton>
+      <Passkey />
     </StyledSidebar>
   );
 }

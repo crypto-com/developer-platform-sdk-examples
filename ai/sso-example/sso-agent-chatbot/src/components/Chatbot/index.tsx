@@ -23,8 +23,10 @@ import {
 } from "../../integration/chain-ai.interface";
 import { getChatStartDate } from "../../helpers/chat.helpers";
 import { Alert, Button } from "antd";
-import { handleAction, validateAction } from "./action";
 import { useSSOStore } from "../../sso/useSSOConnector";
+import { Balance, Transfer, Session } from "../../sso/components";
+import { CreateSession } from "../../sso/components/createSession";
+import { Passkey } from "../../sso/components/passkey";
 
 interface BotResponse {
   action?: string;
@@ -36,7 +38,7 @@ export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [context, setContext] = useState<Array<{ role: string; content: string }>>([]);
-  const { isConnected, connectAccount } = useSSOStore();
+  const { isConnected } = useSSOStore();
 
   const chatStartDate = getChatStartDate(messages);
 
@@ -88,12 +90,10 @@ export function Chatbot() {
         return newMessages;
       });
     } else if (result.action != undefined) {
-      const action = validateAction(result.action);
-      const actionResponse = await handleAction(action, result);
       setMessages([
         ...messages,
         {
-          text: actionResponse?.message || "",
+          text: result.action || "",
           type: InputType.Bot,
           isJson: false,
           isLoading: false,
@@ -181,13 +181,37 @@ export function Chatbot() {
     }
   };
 
-  if (!isConnected) {
-    return  <div className="flex justify-center items-center h-screen w-screen">
-        <Button onClick={() => {
-          connectAccount();
-        }}>Connect</Button>
-    </div>
-  }
+  // if (!isConnected) {
+  //   return  <div className="flex justify-center items-center h-screen w-screen">
+  //       <Button onClick={() => {
+  //         connectAccount();
+  //       }}>Connect</Button>
+  //   </div>
+  // }
+
+  // if (isConnected) {
+  //   return (
+  //     <div className="flex h-full">
+  //       <div className="w-1/2 border-r">
+  //         <Session />
+  //       </div>
+  //       <div className="w-1/2 p-8 flex flex-col gap-8 items-center justify-center">
+  //         <div className="w-full max-w-md">
+  //           <Passkey />
+  //         </div>
+  //         <div className="w-full max-w-md">
+  //           <CreateSession />
+  //         </div>
+  //         <div className="w-full max-w-md">
+  //           <Transfer />
+  //         </div>
+  //         <div className="w-full max-w-md">
+  //           <Balance />
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <StyledChatBotContainer>
