@@ -1,125 +1,418 @@
+import { ToolTypes } from '@mistralai/mistralai/models/components/tooltypes.js';
 import OpenAI from 'openai';
-import { Function } from './agent.interfaces.js';
+import {
+  SwapTokenParameters,
+  createWalletParameters,
+  getBalanceParameters,
+  getBlockByTagParameters,
+  getContractAbiParameters,
+  getCurrentTimeParameters,
+  getErc20BalanceParameters,
+  getLatestBlockParameters,
+  getTransactionByHash,
+  getTransactionStatusParameters,
+  getTransactionsByAddressParameters,
+  sendTransactionParameters,
+  wrapTokenParameters,
+} from '../../helpers/chain-ai.helpers.js';
+import { BlockchainFunction } from './agent.interfaces.js';
 
-export const CONTENT: string = `
-  You are an AI assistant that interacts with Ethereum and Cronos blockchains. 
-  Your role is to interpret user queries, map them to predefined functions, and execute them.
-  Always pick the most relevant function based on the user's intent, regardless of wording.
-  Available functions include:
-
-  - 'createSSOWallet': Create a new SSO wallet using passkeys.
-  - 'createSSOSession': Create a new session for the SSO wallet with specified limits.
-  - 'transferFunds': Transfer funds using the SSO wallet session.
-
-  Be flexible in mapping user language to these functions.
-`;
-
-export const MAX_CONTEXT_LENGTH: number = 10;
-
-export const REQUIRED_ARGS: Record<Function, string[]> = {
-  [Function.FunctionNotFound]: [],
-  [Function.AccountRequest]: [],
-  [Function.InitCopyTrade]: ['from'],
-  [Function.CreateSSOWallet]: [],
-  [Function.CreateSSOSession]: ['expiry', 'feeLimit'],
-  [Function.TransferFunds]: ['to', 'amount'],
-};
+export const CONTENT: string =
+  "You are an AI assistant that helps users interact with Ethereum and Cronos blockchains. You can use multiple functions if needed to fulfill the user's request.";
 
 export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
-      name: Function.AccountRequest,
-      description: 'Asks for account address',
-      parameters: {
-        type: 'object',
-        properties: {},
-      },
+      name: BlockchainFunction.TransferToken,
+      description: 'Transfer native token or a token (specified by its contract address) to a recipient address',
+      parameters: sendTransactionParameters,
     },
   },
   {
     type: 'function',
     function: {
-      name: Function.InitCopyTrade,
-      description:
-        'This function is called after a user provides his ethereum wallet address starting with 0x. After approving and providing an account, will initiate the copy trading',
-      parameters: {
-        type: 'object',
-        properties: {
-          from: {
-            type: 'string',
-            description: `Copy the transaction from a top wallet address and execute it with the 'from' wallet`,
-          },
-        },
-        required: ['from'],
-      },
+      name: BlockchainFunction.GetBalance,
+      description: 'Get the current balance of specified  wallet addresses',
+      parameters: getBalanceParameters,
     },
   },
   {
     type: 'function',
     function: {
-      name: Function.CreateSSOWallet,
-      description: 'Creates a new ZKSync SSO wallet using passkeys',
-      parameters: {
-        type: 'object',
-        properties: {}
-      }
-    }
-  },
-  {
-    type: 'function', 
-    function: {
-      name: Function.CreateSSOSession,
-      description: 'Creates a new session for the SSO wallet with specified limits',
-      parameters: {
-        type: 'object',
-        properties: {
-          expiry: {
-            type: 'string',
-            description: 'Session expiry duration e.g. "1 day"'
-          },
-          feeLimit: {
-            type: 'string',
-            description: 'Maximum fee limit in ETH'
-          },
-          transfers: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                to: { type: 'string' },
-                valueLimit: { type: 'string' }
-              }
-            }
-          }
-        },
-        required: ['expiry', 'feeLimit']
-      }
-    }
+      name: BlockchainFunction.GetLatestBlock,
+      description: 'Get the latest block height from the Cronos blockchain',
+      parameters: getLatestBlockParameters,
+    },
   },
   {
     type: 'function',
     function: {
-      name: Function.TransferFunds,
-      description: 'Transfer funds using the SSO wallet session',
+      name: BlockchainFunction.GetTransactionsByAddress,
+      description: 'Get the list of transactions for a specified Cronos address',
+      parameters: getTransactionsByAddressParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.GetContractABI,
+      description: 'Get the ABI of a verified smart contract',
+      parameters: getContractAbiParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.GetTransactionByHash,
+      description: 'Get the details of a transaction by its hash',
+      parameters: getTransactionByHash,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.GetBlockByTag,
+      description: 'Get information about block by its number or tag (e.g. "latest", "earliest", "pending")',
+      parameters: getBlockByTagParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.GetTransactionStatus,
+      description: 'Get the status of a transaction by its hash',
+      parameters: getTransactionStatusParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.CreateWallet,
+      description: 'Create a new random wallet',
+      parameters: createWalletParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.WrapToken,
+      description: 'Wrap a token',
+      parameters: wrapTokenParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.SwapToken,
+      description: 'Swap a token from `fromContractAddress` to `toContractAddress`',
+      parameters: SwapTokenParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.GetCurrentTime,
+      description: 'Get the current local and UTC time',
+      parameters: getCurrentTimeParameters,
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: BlockchainFunction.GetErc20Balance,
+      description: 'Get the balance of an ERC20 token for a specific wallet address',
+      parameters: getErc20BalanceParameters,
+    },
+  },
+];
+
+export const GEMINI_TOOLS = {
+  function_declarations: [
+    {
+      name: BlockchainFunction.GetLatestBlock,
+      description: "Get information about block by its number or tag (e.g. 'latest', 'earliest', 'pending')",
       parameters: {
-        type: 'object',
+        type: 'OBJECT',
         properties: {
-          to: {
-            type: 'string',
-            description: 'Recipient address'
+          tag: {
+            type: 'STRING',
+            description: 'The tag or number of the block',
+          },
+        },
+        required: ['tag'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetTransactionStatus,
+      description: 'Get the status of a transaction by its hash',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          hash: {
+            type: 'STRING',
+            description: 'The hash of the transaction',
+          },
+        },
+        required: ['hash'],
+      },
+    },
+    {
+      name: BlockchainFunction.CreateWallet,
+      description: 'Create a new random wallet',
+    },
+    {
+      name: BlockchainFunction.WrapToken,
+      description: 'Wrap a token',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          token: {
+            type: 'STRING',
+            description: 'The token to be wrapped',
+          },
+        },
+        required: ['token'],
+      },
+    },
+    {
+      name: BlockchainFunction.SwapToken,
+      description: 'Swap a token from `fromContractAddress` to `toContractAddress`',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          fromContractAddress: {
+            type: 'STRING',
+            description: 'The contract address of the token to be swapped from',
+          },
+          toContractAddress: {
+            type: 'STRING',
+            description: 'The contract address of the token to be swapped to',
+          },
+        },
+        required: ['fromContractAddress', 'toContractAddress'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetCurrentTime,
+      description: 'Get the current local and UTC time',
+    },
+    {
+      name: BlockchainFunction.TransferToken,
+      description: 'Transfer native token or a token (specified by its contract address) to a recipient address',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          recipientAddress: {
+            type: 'STRING',
+            description: 'The recipient address',
           },
           amount: {
-            type: 'string',
-            description: 'Amount to transfer'
+            type: 'STRING',
+            description: 'The amount to transfer',
           },
-          token: {
-            type: 'string',
-            description: 'Token address (optional, ETH if omitted)'
-          }
+          contractAddress: {
+            type: 'STRING',
+            description: 'The contract address of the token (optional for native token)',
+          },
         },
-        required: ['to', 'amount']
-      }
-    }
-  }
+        required: ['recipientAddress', 'amount'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetBalance,
+      description: 'Get the current balance of specified wallet address',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          address: {
+            type: 'STRING',
+            description: 'Wallet address to get balance for',
+          },
+        },
+        required: ['address'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetTransactionsByAddress,
+      description: 'Get the list of transactions for a specified Cronos address',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          address: {
+            type: 'STRING',
+            description: 'The address to get transactions for',
+          },
+        },
+        required: ['address'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetContractABI,
+      description: 'Get the ABI of a verified smart contract',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          contractAddress: {
+            type: 'STRING',
+            description: 'The contract address',
+          },
+        },
+        required: ['contractAddress'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetTransactionByHash,
+      description: 'Get the details of a transaction by its hash',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          hash: {
+            type: 'STRING',
+            description: 'The hash of the transaction',
+          },
+        },
+        required: ['hash'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetBlockByTag,
+      description: 'Get information about block by its number or tag (e.g. "latest", "earliest", "pending")',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          tag: {
+            type: 'STRING',
+            description: 'The tag or number of the block',
+          },
+        },
+        required: ['tag'],
+      },
+    },
+    {
+      name: BlockchainFunction.GetErc20Balance,
+      description: 'Get the balance of an ERC20 token for a specific wallet address',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          address: {
+            type: 'STRING',
+            description: 'The wallet address to check balance for',
+          },
+          contractAddress: {
+            type: 'STRING',
+            description: 'The ERC20 token contract address',
+          },
+        },
+        required: ['address', 'contractAddress'],
+      },
+    },
+  ],
+};
+
+export const MISTRAL_TOOLS = [
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.TransferToken,
+      description: 'Transfer native token or a token (specified by its contract address) to a recipient address',
+      parameters: sendTransactionParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetBalance,
+      description: 'Get the current balance of specified  wallet addresses',
+      parameters: getBalanceParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetLatestBlock,
+      description: 'Get the latest block height from the Cronos blockchain',
+      parameters: getLatestBlockParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetTransactionsByAddress,
+      description: 'Get the list of transactions for a specified Cronos address',
+      parameters: getTransactionsByAddressParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetContractABI,
+      description: 'Get the ABI of a verified smart contract',
+      parameters: getContractAbiParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetTransactionByHash,
+      description: 'Get the details of a transaction by its hash',
+      parameters: getTransactionByHash,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetBlockByTag,
+      description: 'Get information about block by its number or tag (e.g. "latest", "earliest", "pending")',
+      parameters: getBlockByTagParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetTransactionStatus,
+      description: 'Get the status of a transaction by its hash',
+      parameters: getTransactionStatusParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.CreateWallet,
+      description: 'Create a new random wallet',
+      parameters: createWalletParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.WrapToken,
+      description: 'Wrap a token',
+      parameters: wrapTokenParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.SwapToken,
+      description: 'Swap a token from `fromContractAddress` to `toContractAddress`',
+      parameters: SwapTokenParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetCurrentTime,
+      description: 'Get the current local and UTC time',
+      parameters: getCurrentTimeParameters,
+    },
+  },
+  {
+    type: 'function' as ToolTypes,
+    function: {
+      name: BlockchainFunction.GetErc20Balance,
+      description: 'Get the balance of an ERC20 token for a specific wallet address',
+      parameters: getErc20BalanceParameters,
+    },
+  },
 ];

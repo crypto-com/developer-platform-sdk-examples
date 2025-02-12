@@ -6,6 +6,7 @@ export interface QueryResponse extends ResponseSuccess {
   hasErrors: boolean;
   results: FunctionCallResponse[];
   context: QueryContext[];
+  finalResponse: string;
 }
 
 export interface HealthCheckResponse extends ResponseSuccess {

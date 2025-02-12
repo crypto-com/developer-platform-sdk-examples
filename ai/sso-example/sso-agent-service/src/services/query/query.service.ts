@@ -28,6 +28,7 @@ export class QueryService {
    * @returns {Promise<{
    *   functionResponses: BlockchainFunctionResponse<BlockchainFunctionType>[];
    *   context: QueryContext[];
+   *   finalResponse: string;
    * }>} - A promise that resolves to an object containing both function responses and context.
    * @memberof QueryService
    */
@@ -37,12 +38,18 @@ export class QueryService {
   ): Promise<{
     functionResponses: FunctionCallResponse[];
     context: QueryContext[];
+    finalResponse: string;
   }> {
     const interpretation = await this.AIAgentService.interpretUserQuery(query, context);
-    const functionResponses = await this.AIAgentService.processInterpretation(interpretation);
+    const { functionResponses, finalResponse } = await this.AIAgentService.processInterpretation(
+      interpretation,
+      query,
+      context
+    );
 
-    const updatedContext = this.AIAgentService.updateContext(context, query, JSON.stringify(functionResponses));
+    // Update context with both the query and the final AI response
+    const updatedContext = this.AIAgentService.updateContext(context, query, finalResponse);
 
-    return { functionResponses, context: updatedContext };
+    return { functionResponses, context: updatedContext, finalResponse };
   }
 }
