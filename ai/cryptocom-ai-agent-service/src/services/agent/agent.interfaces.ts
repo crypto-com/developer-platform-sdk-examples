@@ -2,9 +2,21 @@ export enum LLMProvider {
   OpenAI = 'openai',
   Gemini = 'gemini',
   VertexAI = 'vertexai',
+  Mistral = 'mistral',
+  DeepSeek = 'deepseek',
 }
 
 export interface OpenAIOptions {
+  apiKey: string;
+  model?: string;
+}
+
+export interface DeepSeekOptions {
+  apiKey: string;
+  model?: string;
+}
+
+export interface MistralOptions {
   apiKey: string;
   model?: string;
 }
@@ -14,6 +26,8 @@ export interface ExplorerKeys {
 }
 
 export interface Options {
+  mistral?: MistralOptions;
+  deepSeek?: DeepSeekOptions;
   openAI?: OpenAIOptions;
   gemini?: GeminiOptions;
   vertexAI?: VertexAIOptions;

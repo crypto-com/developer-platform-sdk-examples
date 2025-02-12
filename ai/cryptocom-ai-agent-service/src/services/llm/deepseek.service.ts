@@ -1,24 +1,24 @@
 import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources/index.js';
 import { logger } from '../../helpers/logger.helper.js';
-import { OpenAIModelError, OpenAIUnauthorizedError } from '../../lib/errors/service.errors.js';
+import { DeepSeekModelError, DeepSeekUnauthorizedError } from '../../lib/errors/service.errors.js';
 import { CONTENT, TOOLS } from '../agent/agent.constants.js';
 import { AIMessageResponse, FunctionCallResponse, QueryContext, Role } from '../agent/agent.interfaces.js';
 import { LLMConfig, LLMService } from './llm.interface.js';
 
-type OpenAIRole = 'system' | 'user' | 'assistant' | 'tool' | 'function';
+type DeepSeekRole = 'system' | 'user' | 'assistant' | 'tool' | 'function';
 
-export class OpenAIService implements LLMService {
+export class DeepSeekService implements LLMService {
   private client: OpenAI;
   private model: string;
   private lastAssistantMessage: AIMessageResponse | null = null;
 
   constructor(config: LLMConfig) {
-    this.client = new OpenAI({ apiKey: config.apiKey });
-    this.model = config.model || 'gpt-4';
+    this.client = new OpenAI({ apiKey: config.apiKey, baseURL: 'https://api.deepseek.com' });
+    this.model = config.model || 'deepseek-chat';
   }
 
-  private mapRoleToOpenAI(role: Role): OpenAIRole {
+  private mapRoleToDeepSeek(role: Role): DeepSeekRole {
     switch (role) {
       case Role.System:
         return 'system';
@@ -33,7 +33,7 @@ export class OpenAIService implements LLMService {
     }
   }
 
-  private createMessage(role: OpenAIRole, content: string): ChatCompletionMessageParam {
+  private createMessage(role: DeepSeekRole, content: string): ChatCompletionMessageParam {
     return {
       role,
       content,
@@ -44,7 +44,7 @@ export class OpenAIService implements LLMService {
     try {
       const messages: ChatCompletionMessageParam[] = [
         this.createMessage('system', CONTENT),
-        ...context.map((ctx) => this.createMessage(this.mapRoleToOpenAI(ctx.role), ctx.content)),
+        ...context.map((ctx) => this.createMessage(this.mapRoleToDeepSeek(ctx.role), ctx.content)),
         this.createMessage('user', query),
       ];
 
@@ -59,10 +59,10 @@ export class OpenAIService implements LLMService {
       return this.lastAssistantMessage;
     } catch (e) {
       if (e instanceof Error && e.message.includes('Incorrect API key provided')) {
-        throw new OpenAIUnauthorizedError(`OpenAI API key is invalid. ${e.message}`);
+        throw new DeepSeekUnauthorizedError(`DeepSeek API key is invalid. ${e.message}`);
       }
       if (e instanceof Error && e.message.includes('The model') && e.message.includes('does not exist')) {
-        throw new OpenAIModelError(`${e.message}`);
+        throw new DeepSeekModelError(`${e.message}`);
       }
       logger.error('Unknown error while interpreting user query: ', e);
       throw e;
@@ -78,9 +78,9 @@ export class OpenAIService implements LLMService {
       const messages: ChatCompletionMessageParam[] = [
         this.createMessage(
           'system',
-          'You are a helpful blockchain assistant. Generate a clear, concise response based on the function results.'
+          'You are a helpful blockchain assistant powered by DeepSeek. Generate a clear, concise response based on the function results.'
         ),
-        ...context.map((ctx) => this.createMessage(this.mapRoleToOpenAI(ctx.role), ctx.content)),
+        ...context.map((ctx) => this.createMessage(this.mapRoleToDeepSeek(ctx.role), ctx.content)),
         this.createMessage('user', query),
       ];
 
@@ -112,5 +112,10 @@ export class OpenAIService implements LLMService {
       logger.error('Error generating final response:', e);
       return 'Error generating final response';
     }
+  }
+
+  async generateResponse(context: QueryContext[]): Promise<AIMessageResponse> {
+    const lastMessage = context[context.length - 1];
+    return this.interpretUserQuery(lastMessage.content, context);
   }
 }

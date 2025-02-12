@@ -10,6 +10,12 @@ import {
 import { validateFunctionArgs } from '../../helpers/agent.helpers.js';
 import { logger } from '../../helpers/logger.helper.js';
 import { BaseError } from '../../lib/errors/base.error.js';
+import { DeepSeekService } from '../llm/deepseek.service.js';
+import { GeminiService } from '../llm/gemini.service.js';
+import { LLMService } from '../llm/llm.interface.js';
+import { MistralService } from '../llm/mistral.service.js';
+import { OpenAIService } from '../llm/openai.service.js';
+import { VertexAIService } from '../llm/vertexai.service.js';
 import {
   AIMessageResponse,
   BlockchainFunction,
@@ -21,10 +27,6 @@ import {
   Role,
   Status,
 } from './agent.interfaces.js';
-import { LLMService } from '../llm/llm.interface.js';
-import { OpenAIService } from '../llm/openai.service.js';
-import { GeminiService } from '../llm/gemini.service.js';
-import { VertexAIService } from '../llm/vertexai.service.js';
 
 /**
  * Initialize Developer Platform SDK
@@ -124,6 +126,11 @@ export class AIAgentService {
    */
   private initializeLLMService(provider: LLMProvider): LLMService {
     switch (provider) {
+      case LLMProvider.DeepSeek:
+        if (!this.options.deepSeek) {
+          throw new Error('DeepSeek configuration is required when using DeepSeek provider');
+        }
+        return new DeepSeekService(this.options.deepSeek);
       case LLMProvider.OpenAI:
         if (!this.options.openAI) {
           throw new Error('OpenAI configuration is required when using OpenAI provider');
@@ -139,6 +146,11 @@ export class AIAgentService {
           throw new Error('Vertex AI configuration is required when using Vertex AI provider');
         }
         return new VertexAIService(this.options.vertexAI);
+      case LLMProvider.Mistral:
+        if (!this.options.mistral) {
+          throw new Error('Mistral configuration is required when using Mistral provider');
+        }
+        return new MistralService(this.options.mistral);
       default:
         throw new Error(`Unsupported LLM provider: ${provider}`);
     }

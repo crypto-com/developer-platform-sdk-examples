@@ -1,11 +1,11 @@
-import { styled } from "styled-components";
-import { Message } from "./interfaces";
-import { Button, Input } from "antd";
-import { format } from "date-fns";
+import { Button, Input } from 'antd';
+import { format } from 'date-fns';
+import { styled } from 'styled-components';
+import { Message } from './interfaces';
 
 export const StyledMessageContainer = styled.div<{ message: Message }>`
   margin-bottom: 15px;
-  width: ${(props) => (props.message.type === "user" ? "60%" : "100%")};
+  width: ${(props) => (props.message.type === 'user' ? '60%' : '100%')};
   margin-left: auto;
 `;
 
@@ -53,26 +53,26 @@ export const StyledMessageLabel = styled.div`
 export const StyledMessageComponent = styled.div<{ message: Message }>`
   border-radius: 8px;
   background-color: ${(props) =>
-    props.message.type === "user"
-      ? "#57bfe8"
+    props.message.type === 'user'
+      ? '#57bfe8'
       : props.message.isJson
-        ? "#333"
-        : "#f4f4f4"};
+        ? '#333'
+        : '#f4f4f4'};
   color: ${(props) =>
-    props.message.isJson || props.message.type === "user" ? "#fff" : "#000"};
-  font-family: ${(props) => (props.message.isJson ? "monospace" : "inherit")};
+    props.message.isJson || props.message.type === 'user' ? '#fff' : '#000'};
+  font-family: ${(props) => (props.message.isJson ? 'monospace' : 'inherit')};
   display: flex;
   flex-direction: column;
   position: relative;
 
   &:after {
-    content: "${(props) => format(new Date(props.message.timestamp), "p")}";
+    content: "${(props) => format(new Date(props.message.timestamp), 'p')}";
     position: absolute;
     top: 5px;
     right: 15px;
     font-size: 0.75em;
-    color: ${(props) => (props.message.type === "user" ? "#fff" : "grey")};
-    display:  ${(props) => props.message.isJson && "none"}; 
+    color: ${(props) => (props.message.type === 'user' ? '#fff' : 'grey')};
+    display:  ${(props) => props.message.isJson && 'none'}; 
   }
 };
 `;
@@ -81,7 +81,7 @@ export const StyledMessageContent = styled.div<{ isJson?: boolean }>`
   padding: 12px;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: ${props => props.isJson ? 'monospace' : 'inherit'};
+  font-family: ${(props) => (props.isJson ? 'monospace' : 'inherit')};
 `;
 
 export const StyledJsonMessageHeader = styled.div`
@@ -159,9 +159,8 @@ export const StyledInputContainer = styled.div`
   background: #f4f4f4;
   border-radius: 25px;
   padding: 15px 20px;
-  gap: 1.5rem;
+  gap: 1rem;
   position: relative;
-  overflow: hidden;
 `;
 
 export const StyledDisclaimer = styled.div`
@@ -177,7 +176,7 @@ export const StyledTextArea = styled(Input.TextArea)`
   outline: none;
   background: transparent;
   border-radius: 26px;
-  padding-right: 3rem;
+  padding-right: 240px;
   overflow: auto;
 
   &:hover,
@@ -237,4 +236,26 @@ export const StyledDateLabel = styled.span`
   margin: 20px;
   width: auto;
   border-radius: 26px;
+`;
+
+export const StyledModelSelector = styled.div`
+  position: absolute;
+  right: 55px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 180px;
+
+  .ant-select {
+    width: 100%;
+  }
+
+  .ant-select-dropdown {
+    min-width: 180px !important;
+  }
+
+  .ant-select-selector {
+    background: transparent !important;
+    border: 1px solid #d9d9d9 !important;
+    border-radius: 4px !important;
+  }
 `;
