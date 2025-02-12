@@ -1,7 +1,7 @@
 import { useSSOStore } from '../useSSOStore';
 import type { SessionData } from '../useSSOStore';
 import { Button, Card, Typography, Tag } from 'antd';
-import { ExportOutlined } from '@ant-design/icons';
+import { ExportOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { LimitType, SessionState, SessionStatus, type Limit, type TransferPolicy } from 'zksync-sso/utils';
 import { getTXExplorerLink } from '../utils';
@@ -25,7 +25,8 @@ const isExpired = (expiresAt: bigint): boolean => {
 
 const SessionRow = ({ session }: { session: SessionData }) => {
     const [sessionState, setSessionState] = useState<SessionState | null>(null);
-    const { fetchSessionState } = useSSOStore();
+    const [revoking, setRevoking] = useState(false);
+    const { fetchSessionState, revokeSession } = useSSOStore();
 
     useEffect(() => {
         fetchSessionState(session).then(setSessionState);
@@ -38,11 +39,39 @@ const SessionRow = ({ session }: { session: SessionData }) => {
         return { color: 'default', text: 'Unknown' };
     };
 
+    const handleRevoke = async () => {
+        try {
+            setRevoking(true);
+            await revokeSession(session.sessionId);
+            await fetchSessionState(session).then(setSessionState);
+        } catch (error) {
+            console.error('Failed to revoke session:', error);
+        } finally {
+            setRevoking(false);
+        }
+    };
+
+    const status = getStatus();
+    const isActive = status.text === 'Active';
+
     return (
         <Card
             key={session.sessionId}
             className="w-full"
             size="small"
+            extra={
+                <Button 
+                    danger
+                    type="text"
+                    size="small"
+                    loading={revoking}
+                    disabled={!isActive}
+                    onClick={handleRevoke}
+                    icon={<DeleteOutlined />}
+                >
+                    Revoke
+                </Button>
+            }
         >
             <div className="flex justify-between items-start mb-3">
                 <div>
@@ -52,13 +81,14 @@ const SessionRow = ({ session }: { session: SessionData }) => {
                             {session.sessionId.slice(0, 4)}...{session.sessionId.slice(-4)}
                             <ExportOutlined className="ml-1 text-xs" />
                         </Link>
-                        <Tag color={getStatus().color}>
-                            {getStatus().text}
+                        <Tag color={status.color}>
+                            {status.text}
                         </Tag>
                     </div>
                     <div className="mt-1 text-gray-500 text-sm">
                         <div>Created: {new Date(session.timestamp).toLocaleString()}</div>
                         <div>Expires: {new Date(Number(session.session.expiresAt) * 1000).toLocaleString()}</div>
+                        <div>Fees Remaining: {sessionState?.feesRemaining.toString()}</div>
                     </div>
                 </div>
             </div>

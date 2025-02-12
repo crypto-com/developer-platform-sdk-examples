@@ -3,7 +3,7 @@ import { getAccount, http } from "@wagmi/core";
 import { Address, createPublicClient, createWalletClient, Hex, publicActions, walletActions, toHex, Chain, Transport, Hash } from 'viem';
 import { deployAccount, fetchAccount } from 'zksync-sso/client';
 import { SessionKeyModuleAbi } from "zksync-sso/abi";
-import { createZksyncPasskeyClient, PasskeyRequiredContracts, registerNewPasskey, ZksyncSsoPasskeyClient } from 'zksync-sso/client/passkey';
+import { createZksyncPasskeyClient, registerNewPasskey, ZksyncSsoPasskeyClient } from 'zksync-sso/client/passkey';
 import type { SessionConfig, SessionState } from "zksync-sso/utils";
 import { CHAIN, CONTRACTS } from './constants';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
@@ -47,7 +47,7 @@ export const useSSOStore = create<SSOState>((set, get) => ({
   sessions: [],
   sessionConfig: null,
 
-  initialize: () => {},
+  initialize: () => { },
 
   createSession: async (session: SessionConfig) => {
 
@@ -63,7 +63,7 @@ export const useSSOStore = create<SSOState>((set, get) => ({
         address: CONTRACTS.accountPaymaster,
       },
     });
-    
+
     console.log("create session success: ", result);
 
     set({
@@ -74,44 +74,33 @@ export const useSSOStore = create<SSOState>((set, get) => ({
   },
 
   revokeSession: async (sessionId: Hash) => {
+    const passkeyClient = get().passkeyClient;
 
-    const client = createPublicClient({
-      chain: CHAIN,
-      transport: http()
-    });
+    if (!passkeyClient) {
+      throw new Error('No passkey client found');
+    }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { username, address, passkeyPublicKey } = await fetchAccount(client as any, {
-      contracts: {
-        accountFactory: CONTRACTS.accountFactory as Address,
-        passkey: CONTRACTS.passkey as Address,
-        session: CONTRACTS.session as Address,
-      }
-    })
 
-    const passkeyClient = createZksyncPasskeyClient({
-      address: address,
-      credentialPublicKey: passkeyPublicKey,
-      userName: username,
-      userDisplayName: username,
-      contracts: CONTRACTS as PasskeyRequiredContracts,
-      chain: CHAIN,
-      transport: http(),
-    });
+    try {
+      const result = await passkeyClient.revokeSession({
+        sessionId,
+        paymaster: {
+          address: CONTRACTS.accountPaymaster,
+        },
+      });
 
-    const result = await passkeyClient.revokeSession({
-      sessionId,
-    });
+      console.log("revoke session success: ", result);
 
-    console.log(result);
-
-    get().fetchAllSessions();
+      get().fetchAllSessions();
+    } catch (error) {
+      console.error('Failed to revoke session:', error);
+    }
   },
 
   fetchAllSessions: async () => {
 
     const client = createPublicClient({
-      chain: CHAIN, 
+      chain: CHAIN,
       transport: http()
     });
 
@@ -128,39 +117,41 @@ export const useSSOStore = create<SSOState>((set, get) => ({
     });
 
     const data = logs
-    .filter((log) => log.args.sessionSpec && log.args.sessionHash)
-    .map((log) => ({
-      session: log.args.sessionSpec! as SessionConfig,
-      sessionId: log.args.sessionHash!,
-      transactionHash: log.transactionHash,
-      blockNumber: log.blockNumber,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      timestamp: new Date(parseInt((log as any).blockTimestamp as Hex, 16) * 1000).getTime(),
-    })).sort((a, b) => {
-      if (a.blockNumber < b.blockNumber) return 1;
-      if (a.blockNumber > b.blockNumber) return -1;
-      return 0;
-    });
+      .filter((log) => log.args.sessionSpec && log.args.sessionHash)
+      .map((log) => ({
+        session: log.args.sessionSpec! as SessionConfig,
+        sessionId: log.args.sessionHash!,
+        transactionHash: log.transactionHash,
+        blockNumber: log.blockNumber,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        timestamp: new Date(parseInt((log as any).blockTimestamp as Hex, 16) * 1000).getTime(),
+      })).sort((a, b) => {
+        if (a.blockNumber < b.blockNumber) return 1;
+        if (a.blockNumber > b.blockNumber) return -1;
+        return 0;
+      });
 
     set({
       sessions: data,
     });
   },
-  
+
   loginWithPasskey: async () => {
 
     const client = createPublicClient({
       chain: CHAIN,
       transport: http()
     });
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { address, passkeyPublicKey } = await fetchAccount(client as any, {
       contracts: CONTRACTS
     })
-    
+
+    console.log("fetch account success: ", address, toHex(passkeyPublicKey));
+
     const passkeyClient = createZksyncPasskeyClient({
-      address: address,
+      address,
       credentialPublicKey: passkeyPublicKey,
       userName: "chatbot",
       userDisplayName: "Chatbot",
@@ -174,8 +165,6 @@ export const useSSOStore = create<SSOState>((set, get) => ({
       address: address,
       isConnected: true,
     });
-
-    console.log(passkeyClient); 
   },
 
 
@@ -200,7 +189,7 @@ export const useSSOStore = create<SSOState>((set, get) => ({
       .extend(publicActions)
       .extend(walletActions)
       .extend(eip712WalletActions());
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { address } = await deployAccount(throwAwayClient as any, {
       contracts: CONTRACTS,
@@ -234,13 +223,13 @@ export const useSSOStore = create<SSOState>((set, get) => ({
     const client = createPublicClient({
       chain: CHAIN,
       transport: http()
-  });
+    });
 
     const state = await client.readContract({
-        address: CONTRACTS.session,
-        abi: SessionKeyModuleAbi,
-        functionName: "sessionState",
-        args: [address, sessionData.session],
+      address: CONTRACTS.session,
+      abi: SessionKeyModuleAbi,
+      functionName: "sessionState",
+      args: [address, sessionData.session],
     }) as SessionState;
 
     return state;
