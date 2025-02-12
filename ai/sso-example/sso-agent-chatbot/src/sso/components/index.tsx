@@ -7,7 +7,6 @@ import { useSSOStore } from "../useSSOStore";
 import { CreateSession } from "./createSession";
 import { getAddressExplorerLink } from "../utils";
 
-
 export const SSOTools = () => {
     const { loginWithPasskey, createAccountAndDeploy, isConnected, address, logout } = useSSOStore();
 

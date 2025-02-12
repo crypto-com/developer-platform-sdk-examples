@@ -2,45 +2,12 @@ import { useSSOStore } from '../useSSOStore';
 import type { SessionData } from '../useSSOStore';
 import { Button, Card, Typography, Tag } from 'antd';
 import { ExportOutlined } from '@ant-design/icons';
-import { useCallback, useEffect, useState } from 'react';
-import { createPublicClient, http, Address } from 'viem';
-import { CONTRACTS, CHAIN } from '../constants';
-import { LimitType, type Limit, type TransferPolicy } from 'zksync-sso/utils';
-import { SessionKeyModuleAbi } from 'zksync-sso/abi';
+import { useEffect, useState } from 'react';
+import { LimitType, SessionState, SessionStatus, type Limit, type TransferPolicy } from 'zksync-sso/utils';
 import { getTXExplorerLink } from '../utils';
 
 const { Text, Link } = Typography;
 
-interface SessionState {
-    status: number;
-    feesRemaining: bigint;
-    transferValue: readonly {
-        remaining: bigint;
-        target: Address;
-        selector: Address;
-        index: bigint;
-    }[];
-    callValue: readonly {
-        remaining: bigint;
-        target: Address;
-        selector: Address;
-        index: bigint;
-    }[];
-    callParams: readonly {
-        remaining: bigint;
-        target: Address;
-        selector: Address;
-        index: bigint;
-    }[];
-}
-
-enum SessionStatus {
-    NotInitialized = 0,
-    Active = 1,
-    Closed = 2
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatLimit = (limit: Limit): string => {
     try {
         if (limit.limitType === LimitType.Unlimited) {
@@ -52,52 +19,17 @@ const formatLimit = (limit: Limit): string => {
     }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isExpired = (expiresAt: any): boolean => {
-    try {
-        const timestamp = typeof expiresAt === 'object' && '_hex' in expiresAt
-            ? BigInt(expiresAt._hex)
-            : typeof expiresAt === 'bigint'
-                ? expiresAt
-                : BigInt(expiresAt?.toString() || '0');
-        return timestamp < BigInt(Math.floor(Date.now() / 1000));
-    } catch {
-        console.error('Error checking expiration:', expiresAt);
-        return true;
-    }
+const isExpired = (expiresAt: bigint): boolean => {
+    return expiresAt < BigInt(Math.floor(Date.now() / 1000));
 };
 
 const SessionRow = ({ session }: { session: SessionData }) => {
     const [sessionState, setSessionState] = useState<SessionState | null>(null);
-    const { address } = useSSOStore();
-
-    const fetchSessionState = useCallback(async () => {
-        if (!address) return;
-
-        try {
-            const client = createPublicClient({
-                chain: CHAIN,
-                transport: http()
-            });
-
-            const state = await client.readContract({
-                address: CONTRACTS.session,
-                abi: SessionKeyModuleAbi,
-                functionName: "sessionState",
-                args: [address, session.session],
-            }) as SessionState;
-
-            setSessionState(state);
-        } catch (error) {
-            console.error('Error fetching session state:', error);
-        }
-    }, [address, session.session]);
+    const { fetchSessionState } = useSSOStore();
 
     useEffect(() => {
-        if (address) {
-            fetchSessionState();
-        }
-    }, [address, fetchSessionState]);
+        fetchSessionState(session).then(setSessionState);
+    }, [session, fetchSessionState]);
 
     const getStatus = () => {
         if (sessionState?.status === SessionStatus.Closed) return { color: 'default', text: 'Revoked' };
@@ -115,9 +47,9 @@ const SessionRow = ({ session }: { session: SessionData }) => {
             <div className="flex justify-between items-start mb-3">
                 <div>
                     <div className="flex items-center gap-2">
-                        <Text>Session ID: </Text>
+                        <Text>ID: </Text>
                         <Link href={getTXExplorerLink(session.transactionHash)} target="_blank">
-                            {session.sessionId.slice(0, 10)}...
+                            {session.sessionId.slice(0, 4)}...{session.sessionId.slice(-4)}
                             <ExportOutlined className="ml-1 text-xs" />
                         </Link>
                         <Tag color={getStatus().color}>
@@ -181,12 +113,10 @@ export const Session = () => {
                     </Button>
                 </div>
             </div>
-            <div className="flex-1 overflow-auto">
-                <div className="flex flex-col gap-4 p-4">
-                    {sessions.map((session) => (
-                        <SessionRow key={session.sessionId} session={session} />
-                    ))}
-                </div>
+            <div className="flex flex-col gap-4">
+                {sessions.map((session) => (
+                    <SessionRow key={session.sessionId} session={session} />
+                ))}
             </div>
         </div>
     );

@@ -4,7 +4,7 @@ import { Address, createPublicClient, createWalletClient, Hex, publicActions, wa
 import { deployAccount, fetchAccount } from 'zksync-sso/client';
 import { SessionKeyModuleAbi } from "zksync-sso/abi";
 import { createZksyncPasskeyClient, PasskeyRequiredContracts, registerNewPasskey, ZksyncSsoPasskeyClient } from 'zksync-sso/client/passkey';
-import type { SessionConfig } from "zksync-sso/utils";
+import type { SessionConfig, SessionState } from "zksync-sso/utils";
 import { CHAIN, CONTRACTS } from './constants';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { eip712WalletActions } from "viem/zksync";
@@ -30,6 +30,8 @@ interface SSOState {
   revokeSession: (sessionId: Hash) => Promise<void>;
   fetchAllSessions: () => Promise<void>;
 
+  fetchSessionState: (sessionData: SessionData) => Promise<SessionState>;
+
   createAccountAndDeploy: () => Promise<void>;
   loginWithPasskey: () => Promise<void>;
   logout: () => Promise<void>;
@@ -45,8 +47,7 @@ export const useSSOStore = create<SSOState>((set, get) => ({
   sessions: [],
   sessionConfig: null,
 
-  initialize: () => {
-  },
+  initialize: () => {},
 
   createSession: async (session: SessionConfig) => {
 
@@ -220,5 +221,28 @@ export const useSSOStore = create<SSOState>((set, get) => ({
       address: undefined,
       isConnected: false,
     });
+  },
+
+  fetchSessionState: async (sessionData: SessionData) => {
+    const passkeyClient = get().passkeyClient;
+    const address = get().address;
+
+    if (!passkeyClient || !address) {
+      throw new Error('No passkey client found');
+    }
+
+    const client = createPublicClient({
+      chain: CHAIN,
+      transport: http()
+  });
+
+    const state = await client.readContract({
+        address: CONTRACTS.session,
+        abi: SessionKeyModuleAbi,
+        functionName: "sessionState",
+        args: [address, sessionData.session],
+    }) as SessionState;
+
+    return state;
   }
 })); 

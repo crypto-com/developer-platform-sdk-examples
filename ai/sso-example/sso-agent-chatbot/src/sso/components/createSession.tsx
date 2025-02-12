@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { Button, Form, Input, Card, Typography, message } from 'antd';
 import { useSSOStore } from '../useSSOStore';
-import { zksyncSsoConnector } from "zksync-sso/connector";
-import { connect } from "@wagmi/core";
-import { chain, authServerUrl } from '../constants';
-import { Address, parseEther } from 'viem';
-import { LimitType, LimitUnlimited, SessionConfig } from 'zksync-sso/utils';
+import { Address } from 'viem';
+import { LimitType, SessionConfig } from 'zksync-sso/utils';
 import { generatePrivateKey, privateKeyToAddress } from 'viem/accounts';
 
 const { Text } = Typography;

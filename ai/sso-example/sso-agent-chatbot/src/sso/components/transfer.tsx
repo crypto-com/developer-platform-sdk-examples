@@ -15,47 +15,45 @@ export const Transfer = () => {
 
     return <Card>
         <p>Transfer 1 WEI to NULL address</p>
-        <Button type="primary" loading={false} onClick={async () => {
+        <Button type="primary" loading={loading} onClick={async () => {
             try {
-             
+                if (!sessionConfig || !address) {
+                    throw new Error("Session config or address not found");
+                }
 
-            if (!sessionConfig || !address) {
-                throw new Error("Session config or address not found");
+                setLoading(true);
+                setHash(null);
+
+                const addressArg = address;
+                const sessionKey = localStorage.getItem('chatbot.sessionKey') as Hash;
+
+                console.log("addressArg: ", addressArg);
+                console.log("sessionKey: ", sessionKey);
+                console.log("sessionConfig: ", sessionConfig);
+
+                const sessionClient = createZksyncSessionClient({
+                    address: addressArg,
+                    sessionKey: sessionKey,
+                    sessionConfig: sessionConfig,
+                    chain: CHAIN,
+                    contracts: CONTRACTS,
+                    transport: http(),
+                })
+
+
+                const tx = await sessionClient.sendTransaction({
+                    to: "0x0000000000000000000000000000000000000000",
+                    value: 1n,
+                })
+
+                const receipt = await waitForTransactionReceipt(WagmiConfig, { hash: tx });
+
+                setHash(receipt.transactionHash);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error transferring funds: ", error);
+                setLoading(false);
             }
-
-            setLoading(true);
-            setHash(null);
-
-            const addressArg = address;
-            const sessionKey = localStorage.getItem('chatbot.sessionKey') as Hash;
-
-            console.log("addressArg: ", addressArg);
-            console.log("sessionKey: ", sessionKey);
-            console.log("sessionConfig: ", sessionConfig);
-
-            const sessionClient = createZksyncSessionClient({
-                address: addressArg,
-                sessionKey: sessionKey,
-                sessionConfig: sessionConfig,
-                chain: CHAIN,
-                contracts: CONTRACTS,
-                transport: http(),
-            })
-
-
-            const tx = await sessionClient.sendTransaction({
-                to: "0x0000000000000000000000000000000000000000",
-                value: 1n,
-            })
-
-            const receipt = await waitForTransactionReceipt(WagmiConfig, { hash: tx });
-
-            setHash(receipt.transactionHash);
-            setLoading(false);
-        } catch (error) {
-            console.error("Error transferring funds: ", error);
-            setLoading(false);
-        }
 
         }}>Transfer</Button>
         {
