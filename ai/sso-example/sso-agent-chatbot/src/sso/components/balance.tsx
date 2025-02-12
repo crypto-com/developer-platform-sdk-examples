@@ -1,11 +1,11 @@
 import { useBalance } from "wagmi"
-import { useSSOStore } from "../useSSOConnector"
+import { useSSOStore } from "../useSSOStore"
 import { ethers } from "ethers"
 import { Card } from "antd"
 
 export const Balance = () => {
     const { address } = useSSOStore()
-    const result = useBalance({ address: address as `0x${string}` })
+    const result = useBalance({ address })
 
     if (result.isLoading) {
         return <div>Loading...</div>

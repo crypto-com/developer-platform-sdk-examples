@@ -1,4 +1,3 @@
-import { Passkey } from "../../sso/components/passkey";
 import {
   StyledSidebar,
   StyledLogo,
@@ -12,6 +11,7 @@ import {
   PicCenterOutlined,
   FormOutlined,
 } from "@ant-design/icons";
+import { SSOTools } from "../../sso/components";
 
 export function Navigation() {
   return (
@@ -40,7 +40,7 @@ export function Navigation() {
       >
         Get Block Status
       </StyledButton>
-      <Passkey />
+      <SSOTools />
     </StyledSidebar>
   );
 }

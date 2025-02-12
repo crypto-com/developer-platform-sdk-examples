@@ -1,12 +1,13 @@
-import { useSSOStore } from '../useSSOConnector';
-import type { SessionData } from '../useSSOConnector';
+import { useSSOStore } from '../useSSOStore';
+import type { SessionData } from '../useSSOStore';
 import { Button, Card, Typography, Tag } from 'antd';
 import { ExportOutlined } from '@ant-design/icons';
 import { useCallback, useEffect, useState } from 'react';
-import { createPublicClient, http } from 'viem';
-import { contracts, chain } from '../constants';
+import { createPublicClient, http, Address } from 'viem';
+import { CONTRACTS, CHAIN } from '../constants';
 import { LimitType, type Limit, type TransferPolicy } from 'zksync-sso/utils';
 import { SessionKeyModuleAbi } from 'zksync-sso/abi';
+import { getTXExplorerLink } from '../utils';
 
 const { Text, Link } = Typography;
 
@@ -15,20 +16,20 @@ interface SessionState {
     feesRemaining: bigint;
     transferValue: readonly {
         remaining: bigint;
-        target: `0x${string}`;
-        selector: `0x${string}`;
+        target: Address;
+        selector: Address;
         index: bigint;
     }[];
     callValue: readonly {
         remaining: bigint;
-        target: `0x${string}`;
-        selector: `0x${string}`;
+        target: Address;
+        selector: Address;
         index: bigint;
     }[];
     callParams: readonly {
         remaining: bigint;
-        target: `0x${string}`;
-        selector: `0x${string}`;
+        target: Address;
+        selector: Address;
         index: bigint;
     }[];
 }
@@ -56,8 +57,8 @@ const isExpired = (expiresAt: any): boolean => {
     try {
         const timestamp = typeof expiresAt === 'object' && '_hex' in expiresAt
             ? BigInt(expiresAt._hex)
-            : typeof expiresAt === 'bigint' 
-                ? expiresAt 
+            : typeof expiresAt === 'bigint'
+                ? expiresAt
                 : BigInt(expiresAt?.toString() || '0');
         return timestamp < BigInt(Math.floor(Date.now() / 1000));
     } catch {
@@ -72,18 +73,18 @@ const SessionRow = ({ session }: { session: SessionData }) => {
 
     const fetchSessionState = useCallback(async () => {
         if (!address) return;
-        
+
         try {
             const client = createPublicClient({
-                chain,
+                chain: CHAIN,
                 transport: http()
             });
 
             const state = await client.readContract({
-                address: contracts.session as `0x${string}`,
+                address: CONTRACTS.session,
                 abi: SessionKeyModuleAbi,
                 functionName: "sessionState",
-                args: [address as `0x${string}`, session.session],
+                args: [address, session.session],
             }) as SessionState;
 
             setSessionState(state);
@@ -106,17 +107,16 @@ const SessionRow = ({ session }: { session: SessionData }) => {
     };
 
     return (
-        <Card 
-            key={session.sessionId} 
+        <Card
+            key={session.sessionId}
             className="w-full"
             size="small"
-            bodyStyle={{ padding: '16px' }}
         >
             <div className="flex justify-between items-start mb-3">
                 <div>
                     <div className="flex items-center gap-2">
                         <Text>Session ID: </Text>
-                        <Link href={`https://sepolia.explorer.zksync.io/tx/${session.transactionHash}`} target="_blank">
+                        <Link href={getTXExplorerLink(session.transactionHash)} target="_blank">
                             {session.sessionId.slice(0, 10)}...
                             <ExportOutlined className="ml-1 text-xs" />
                         </Link>
@@ -173,7 +173,7 @@ export const Session = () => {
             <div className="p-4 bg-white">
                 <div className="flex justify-between items-center">
                     <Text strong className="text-lg">Sessions</Text>
-                    <Button 
+                    <Button
                         size="small"
                         onClick={fetchAllSessions}
                     >

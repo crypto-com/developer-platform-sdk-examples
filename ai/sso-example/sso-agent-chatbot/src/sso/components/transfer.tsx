@@ -1,12 +1,12 @@
 import { Button, Card } from "antd"
-import { http, useSendTransaction } from "wagmi"
-import { useSSOStore, wagmiConfig } from "../useSSOConnector";
+import { http } from "wagmi"
+import { useSSOStore } from "../useSSOStore";
 import { createZksyncSessionClient } from "zksync-sso/client";
-import { SessionConfig } from "zksync-sso/utils";
-import { chain, contracts } from "../constants";
+import { CHAIN, CONTRACTS, WagmiConfig } from "../constants";
 import { useState } from "react";
 import { waitForTransactionReceipt } from "@wagmi/core";
-
+import { getTXExplorerLink } from "../utils";
+import { Hash } from "viem";
 export const Transfer = () => {
 
     const { address, sessionConfig } = useSSOStore();
@@ -19,15 +19,15 @@ export const Transfer = () => {
             try {
              
 
-            if (!sessionConfig) {
-                throw new Error("Session config not found");
+            if (!sessionConfig || !address) {
+                throw new Error("Session config or address not found");
             }
 
             setLoading(true);
             setHash(null);
 
-            const addressArg = address as `0x${string}`;
-            const sessionKey = localStorage.getItem('chatbot.sessionKey') as `0x${string}`;
+            const addressArg = address;
+            const sessionKey = localStorage.getItem('chatbot.sessionKey') as Hash;
 
             console.log("addressArg: ", addressArg);
             console.log("sessionKey: ", sessionKey);
@@ -37,8 +37,8 @@ export const Transfer = () => {
                 address: addressArg,
                 sessionKey: sessionKey,
                 sessionConfig: sessionConfig,
-                chain: chain,
-                contracts: contracts,
+                chain: CHAIN,
+                contracts: CONTRACTS,
                 transport: http(),
             })
 
@@ -48,7 +48,7 @@ export const Transfer = () => {
                 value: 1n,
             })
 
-            const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: tx });
+            const receipt = await waitForTransactionReceipt(WagmiConfig, { hash: tx });
 
             setHash(receipt.transactionHash);
             setLoading(false);
@@ -59,7 +59,7 @@ export const Transfer = () => {
 
         }}>Transfer</Button>
         {
-            hash && <p>Transaction hash: <a href={`https://sepolia.explorer.zksync.io/tx/${hash}`} target="_blank" rel="noopener noreferrer">{hash}</a></p>
+            hash && <p>Transaction hash: <a href={getTXExplorerLink(hash)} target="_blank" rel="noopener noreferrer">{hash}</a></p>
         }
     </Card>
 }

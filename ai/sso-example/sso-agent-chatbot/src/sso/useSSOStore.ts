@@ -1,58 +1,37 @@
 import { create } from 'zustand'
-import { createConfig, type CreateConnectorFn, getAccount, http, reconnect } from "@wagmi/core";
-import { zksyncSsoConnector } from "zksync-sso/connector";
-import { Address, createPublicClient, createWalletClient, Hex, publicActions, walletActions, toHex, Chain, Transport } from 'viem';
+import { getAccount, http } from "@wagmi/core";
+import { Address, createPublicClient, createWalletClient, Hex, publicActions, walletActions, toHex, Chain, Transport, Hash } from 'viem';
 import { deployAccount, fetchAccount } from 'zksync-sso/client';
 import { SessionKeyModuleAbi } from "zksync-sso/abi";
 import { createZksyncPasskeyClient, PasskeyRequiredContracts, registerNewPasskey, ZksyncSsoPasskeyClient } from 'zksync-sso/client/passkey';
 import type { SessionConfig } from "zksync-sso/utils";
-import { chain, contracts, authServerUrl } from './constants';
+import { CHAIN, CONTRACTS } from './constants';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { eip712WalletActions } from "viem/zksync";
 
 export interface SessionData {
   session: SessionConfig;
-  sessionId: `0x${string}`;
-  transactionHash: `0x${string}`;
+  sessionId: Hash;
+  transactionHash: Hash;
   blockNumber: bigint;
   timestamp: number;
 }
 
-const connector = zksyncSsoConnector({
-  authServerUrl,
-  session: {
-    feeLimit: 0n,
-    transfers: [{ to: "0x0000000000000000000000000000000000000000", valueLimit: 0n }]
-  },
-});
-
-export const wagmiConfig = createConfig({
-  chains: [chain],
-  connectors: [connector as CreateConnectorFn],
-  transports: { [chain.id]: http() }
-});
-
 interface SSOState {
-  // wagmiConfig: ReturnType<typeof createConfig> | null;
   account: ReturnType<typeof getAccount> | null;
   isConnected: boolean;
-  address: string | undefined;
+  address: Address | undefined;
   passkeyClient: ZksyncSsoPasskeyClient<Transport, Chain> | null;
   sessions: SessionData[]
 
   sessionConfig: SessionConfig | null;
 
-  // connectAccount: () => Promise<void>;
-  // disconnectAccount: () => void;
   initialize: () => void;
-  revokeSession: (sessionId: string) => Promise<void>;
+  revokeSession: (sessionId: Hash) => Promise<void>;
   fetchAllSessions: () => Promise<void>;
 
-  // --- passkey
   createAccountAndDeploy: () => Promise<void>;
-
   loginWithPasskey: () => Promise<void>;
-
   logout: () => Promise<void>;
 
   createSession: (session: SessionConfig) => Promise<void>;
@@ -69,63 +48,6 @@ export const useSSOStore = create<SSOState>((set, get) => ({
   initialize: () => {
   },
 
-  // connectAccount: async () => {
-  //   let { wagmiConfig } = get();
-    
-  //   // Initialize if not already done
-  //   if (!wagmiConfig) {
-  //     const connector = zksyncSsoConnector({
-  //       authServerUrl,
-  //       session: {
-  //         feeLimit: 0n,
-  //         transfers: [{ to: "0x0000000000000000000000000000000000000000", valueLimit: 0n }]
-  //       },
-  //     });
-  
-  //     wagmiConfig = createConfig({
-  //       chains: [chain],
-  //       connectors: [connector as CreateConnectorFn],
-  //       transports: { [chain.id]: http() }
-  //     });
-      
-  //     set({ wagmiConfig });
-  //   }
-
-  //   const connector = zksyncSsoConnector({
-  //     authServerUrl,
-  //     session: {
-  //       feeLimit: 0n,
-  //       transfers: [{ to: "0x0000000000000000000000000000000000000000", valueLimit: 0n }]
-  //     },
-  //   });
-
-  //   const result = await connect(wagmiConfig, {
-  //     connector,
-  //     chainId: chain.id,
-  //   });
-  //   console.log(result);
-  //   const account = getAccount(wagmiConfig);
-  //   set({
-  //     account,
-  //     isConnected: account.isConnected,
-  //     address: account.address,
-  //     shortAddress: account.address ? `${account.address.slice(0, 6)}...${account.address.slice(-4)}` : null
-  //   });
-  // },
-
-  // disconnectAccount: () => {
-  //   const { wagmiConfig } = get();
-  //   if (!wagmiConfig) return;
-    
-  //   disconnect(wagmiConfig);
-  //   set({
-  //     account: null,
-  //     isConnected: false,
-  //     address: undefined,
-  //     shortAddress: null
-  //   });
-  // },
-
   createSession: async (session: SessionConfig) => {
 
     const passkeyClient = get().passkeyClient;
@@ -137,7 +59,7 @@ export const useSSOStore = create<SSOState>((set, get) => ({
     const result = await passkeyClient.createSession({
       sessionConfig: session,
       paymaster: {
-        address: contracts.accountPaymaster as Address,
+        address: CONTRACTS.accountPaymaster,
       },
     });
     
@@ -150,19 +72,19 @@ export const useSSOStore = create<SSOState>((set, get) => ({
     get().fetchAllSessions();
   },
 
-  revokeSession: async (sessionId: string) => {
+  revokeSession: async (sessionId: Hash) => {
 
     const client = createPublicClient({
-      chain,
+      chain: CHAIN,
       transport: http()
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { username, address, passkeyPublicKey } = await fetchAccount(client as any, {
       contracts: {
-        accountFactory: contracts.accountFactory as Address,
-        passkey: contracts.passkey as Address,
-        session: contracts.session as Address,
+        accountFactory: CONTRACTS.accountFactory as Address,
+        passkey: CONTRACTS.passkey as Address,
+        session: CONTRACTS.session as Address,
       }
     })
 
@@ -171,13 +93,13 @@ export const useSSOStore = create<SSOState>((set, get) => ({
       credentialPublicKey: passkeyPublicKey,
       userName: username,
       userDisplayName: username,
-      contracts: contracts as PasskeyRequiredContracts,
-      chain: chain,
+      contracts: CONTRACTS as PasskeyRequiredContracts,
+      chain: CHAIN,
       transport: http(),
     });
 
     const result = await passkeyClient.revokeSession({
-      sessionId: sessionId as `0x${string}`,
+      sessionId,
     });
 
     console.log(result);
@@ -188,7 +110,7 @@ export const useSSOStore = create<SSOState>((set, get) => ({
   fetchAllSessions: async () => {
 
     const client = createPublicClient({
-      chain, 
+      chain: CHAIN, 
       transport: http()
     });
 
@@ -196,10 +118,10 @@ export const useSSOStore = create<SSOState>((set, get) => ({
 
     const logs = await client.getContractEvents({
       abi: SessionKeyModuleAbi,
-      address: contracts.session as Address,
+      address: CONTRACTS.session,
       eventName: "SessionCreated",
       args: {
-        account: address as `0x${string}`,
+        account: address,
       },
       fromBlock: 0n,
     });
@@ -227,17 +149,13 @@ export const useSSOStore = create<SSOState>((set, get) => ({
   loginWithPasskey: async () => {
 
     const client = createPublicClient({
-      chain,
+      chain: CHAIN,
       transport: http()
     });
     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { address, passkeyPublicKey } = await fetchAccount(client as any, {
-      contracts: {
-        accountFactory: contracts.accountFactory as Address,
-        passkey: contracts.passkey as Address,
-        session: contracts.session as Address,
-      }
+      contracts: CONTRACTS
     })
     
     const passkeyClient = createZksyncPasskeyClient({
@@ -245,8 +163,8 @@ export const useSSOStore = create<SSOState>((set, get) => ({
       credentialPublicKey: passkeyPublicKey,
       userName: "chatbot",
       userDisplayName: "Chatbot",
-      contracts: contracts as PasskeyRequiredContracts,
-      chain,
+      contracts: CONTRACTS,
+      chain: CHAIN,
       transport: http(),
     });
 
@@ -275,7 +193,7 @@ export const useSSOStore = create<SSOState>((set, get) => ({
 
     const throwAwayClient = createWalletClient({
       account: privateKeyToAccount(generatePrivateKey()),
-      chain,
+      chain: CHAIN,
       transport: http(),
     })
       .extend(publicActions)
@@ -284,14 +202,10 @@ export const useSSOStore = create<SSOState>((set, get) => ({
     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { address } = await deployAccount(throwAwayClient as any, {
-      contracts: {
-        accountFactory: contracts.accountFactory as Address,
-        passkey: contracts.passkey as Address,
-        session: contracts.session as Address,
-      },
+      contracts: CONTRACTS,
       credentialPublicKey,
       uniqueAccountId: credentialId,
-      paymasterAddress: contracts.accountPaymaster as Address,
+      paymasterAddress: CONTRACTS.accountPaymaster,
       initialSession: undefined,
     })
 

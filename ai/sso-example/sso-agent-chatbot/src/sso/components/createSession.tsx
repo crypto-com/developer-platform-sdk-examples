@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Form, Input, Card, Typography, message } from 'antd';
-import { useSSOStore } from '../useSSOConnector';
+import { useSSOStore } from '../useSSOStore';
 import { zksyncSsoConnector } from "zksync-sso/connector";
 import { connect } from "@wagmi/core";
 import { chain, authServerUrl } from '../constants';
