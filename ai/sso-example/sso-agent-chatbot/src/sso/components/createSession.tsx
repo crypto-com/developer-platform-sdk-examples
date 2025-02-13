@@ -38,25 +38,24 @@ export const CreateSession = () => {
             const sessionPublicKey = privateKeyToAddress(sessionKey);
 
             const target = values.transferRecipient as Address;
-            const maxValuePerUse = parseInt(values.valueLimit);
-            const feeLimit = parseInt(values.feeLimit);
+            const maxValuePerUse = BigInt(values.valueLimit);
+            const feeLimit = BigInt(values.feeLimit);
 
-
-            const session = {
+            const session: SessionConfig = {
                 signer: sessionPublicKey,
                 expiresAt: BigInt(Math.floor(Date.now() / 1000) + 60 * 60 * 24), // 24 hours
                 feeLimit: {
                     limitType: LimitType.Lifetime,
-                    limit: BigInt(feeLimit),
+                    limit: feeLimit,
                     period: 0n,
                 },
                 transferPolicies: [
                   {
                     target: target,
-                    maxValuePerUse: BigInt(maxValuePerUse),
+                    maxValuePerUse: maxValuePerUse,
                     valueLimit: {
                       limitType: LimitType.Lifetime,
-                      limit: BigInt(maxValuePerUse),
+                      limit: maxValuePerUse,
                       period: 0n,
                     },
                   }
@@ -64,7 +63,6 @@ export const CreateSession = () => {
                 callPolicies: [],
             }
 
-            
             await createSession(session);
 
             localStorage.setItem('chatbot.sessionKey', sessionKey);
@@ -73,8 +71,7 @@ export const CreateSession = () => {
             fetchAllSessions();
 
         } catch (error) {
-            console.error('Error creating session:', error);
-            message.error('Failed to create session');
+            console.error(error);
         } finally {
             setLoading(false);
         }

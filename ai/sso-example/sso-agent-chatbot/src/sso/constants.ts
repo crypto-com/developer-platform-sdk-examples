@@ -2,6 +2,7 @@ import { createConfig } from "@wagmi/core";
 import { Address, http } from "viem";
 import { zksyncSepoliaTestnet } from "viem/chains";
 import { PasskeyRequiredContracts } from "zksync-sso/client/passkey";
+// import { zksyncSsoConnector } from "zksync-sso/connector";
 
 // export const cronoszkEVMTestnet = defineChain({
 //   id: 7001,
@@ -24,8 +25,13 @@ import { PasskeyRequiredContracts } from "zksync-sso/client/passkey";
 
 export const CHAIN = zksyncSepoliaTestnet;
 
+// const connector = zksyncSsoConnector({
+//   authServerUrl: "https://auth-test.zksync.io",
+// });
+
 export const WagmiConfig = createConfig({
   chains: [CHAIN],
+  // connectors: [connector],
   transports: { [CHAIN.id]: http() }
 });
 

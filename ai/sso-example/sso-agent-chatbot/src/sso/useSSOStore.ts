@@ -199,8 +199,21 @@ export const useSSOStore = create<SSOState>((set, get) => ({
       initialSession: undefined,
     })
 
+    const passkeyClient = createZksyncPasskeyClient({
+      address,
+      credentialPublicKey: credentialPublicKey,
+      userName: "chatbot",
+      userDisplayName: "Chatbot",
+      contracts: CONTRACTS,
+      chain: CHAIN,
+      transport: http(),
+    });
+
+
     set({
       address: address,
+      isConnected: true,
+      passkeyClient: passkeyClient as ZksyncSsoPasskeyClient<Transport, Chain>,
     });
   },
 
