@@ -39,7 +39,7 @@ export const cronoszkEVMTestnet = defineChain({
     symbol: "zkTCRO",
   },
   rpcUrls: {
-    default: { http: ["https://testnet.zkevm.cronos.org/"] },
+    default: { http: ["https://seed.testnet.zkevm.cronos.org/"] },
   },
   blockExplorers: {
     default: {
