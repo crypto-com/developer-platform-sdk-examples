@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white;
+  }
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  background-color: #ffffff;
+  color: #213547;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: #213547;
+}
+
+a {
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #1d4ed8;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  color: #213547;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #ffffff;
+  color: #213547;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover {
+  border-color: #2563eb;
+  background-color: #f8fafc;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
