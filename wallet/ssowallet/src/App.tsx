@@ -35,8 +35,7 @@ const { Text, Title } = Typography
 const showError = (err: unknown) => {
   let errorMessage = 'An error occurred'
   if (err instanceof Error) {
-    // Extract the "Details:" part if it exists
-    const detailsMatch = err.message.match(/Details: (.+?)(?=\n|$)/)
+    const detailsMatch = err.message.match(/Details: (.+?)(?=\.|$|\n)/)
     errorMessage = detailsMatch ? detailsMatch[1] : err.message
   } else if (typeof err === 'string') {
     errorMessage = err
@@ -47,6 +46,7 @@ const showError = (err: unknown) => {
     className: 'message-with-close',
     onClick: () => message.destroy(),
   })
+  return errorMessage
 }
 
 function WalletSetup() {
@@ -343,10 +343,6 @@ function WalletDashboard() {
   >(null)
   const [txError, setTxError] = useState<string | null>(null)
   const [revokeLoading, setRevokeLoading] = useState<string | null>(null)
-  const [revokeError, setRevokeError] = useState<{
-    sessionId: string
-    message: string
-  } | null>(null)
   const [form] = Form.useForm()
 
   // Load balance and sessions when component mounts or when address changes
@@ -472,7 +468,6 @@ function WalletDashboard() {
   const handleRevoke = async (sessionId: string) => {
     try {
       setRevokeLoading(sessionId)
-      setRevokeError(null) // Clear any previous error
       await revokeSession(sessionId as `0x${string}`)
       message.success('Session revoked successfully')
       // If the revoked session was the active one, clear it
@@ -481,10 +476,7 @@ function WalletDashboard() {
       }
     } catch (err) {
       console.error('Error revoking session:', err)
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to revoke session'
-      setRevokeError({ sessionId, message: errorMessage })
-      showError(errorMessage)
+      showError(err)
     } finally {
       setRevokeLoading(null)
       // Always refresh the sessions list to ensure it's up to date
@@ -771,11 +763,6 @@ function WalletDashboard() {
                   ).toLocaleString()}{' '}
                   Wei
                 </Text>
-                {revokeError && revokeError.sessionId === session.sessionId && (
-                  <div className="session-error">
-                    <Text type="danger">{revokeError.message}</Text>
-                  </div>
-                )}
               </div>
             </Card>
           )
