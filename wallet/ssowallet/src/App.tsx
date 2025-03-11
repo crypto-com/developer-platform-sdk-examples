@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -10,14 +10,18 @@ import {
 import { useSSOStore } from './services/useSSOStore'
 import {
   Button,
-  Input,
-  message,
-  Typography,
-  Form,
   Card,
-  Space,
+  Divider,
+  Form,
+  Input,
+  Layout,
+  Menu,
+  message,
   Modal,
+  Popover,
   Spin,
+  Typography,
+  Space,
 } from 'antd'
 import {
   CopyOutlined,
@@ -763,6 +767,61 @@ function WalletDashboard() {
                   ).toLocaleString()}{' '}
                   Wei
                 </Text>
+                <div
+                  className="session-keys-container"
+                  style={{ marginTop: '10px', display: 'flex', gap: '8px' }}
+                >
+                  <Popover
+                    content={
+                      <div>
+                        <Text strong>Session Pubkey:</Text>
+                        <Text code copyable>
+                          {session.session.signer}
+                        </Text>
+                      </div>
+                    }
+                    trigger="click"
+                    title="Session Public Key"
+                  >
+                    <Button size="small">Session Pubkey</Button>
+                  </Popover>
+                  <Popover
+                    content={
+                      <div style={{ position: 'relative' }}>
+                        <Input
+                          type="password"
+                          value={
+                            localStorage.getItem(
+                              `sso.sessionKey.${session.session.signer}`
+                            ) || 'Not available'
+                          }
+                          readOnly
+                          style={{ paddingRight: '40px' }}
+                        />
+                        <Button
+                          size="small"
+                          style={{ position: 'absolute', right: 8, top: 4 }}
+                          onClick={() => {
+                            const sessionKey = localStorage.getItem(
+                              `sso.sessionKey.${session.session.signer}`
+                            )
+                            if (sessionKey) {
+                              navigator.clipboard.writeText(sessionKey)
+                              message.success('Session key copied to clipboard')
+                            }
+                          }}
+                          icon={<CopyOutlined />}
+                          title="Copy to clipboard"
+                          type="text"
+                        />
+                      </div>
+                    }
+                    trigger="click"
+                    title="Session Private Key"
+                  >
+                    <Button size="small">Session Key</Button>
+                  </Popover>
+                </div>
               </div>
             </Card>
           )
@@ -1109,6 +1168,267 @@ function TransferToken() {
   )
 }
 
+// Agent page component for automated transactions
+function AgentPage() {
+  const { sessionConfig, sendTransaction } = useSSOStore()
+  const [receiver, setReceiver] = useState<string>(
+    '0x0000000000000000000000000000000000000000'
+  )
+  const [amount, setAmount] = useState<string>('1') // Default to 1 wei (smallest unit)
+  const [intervalTime, setIntervalTime] = useState<number>(60) // Default 1 minute in seconds
+  const [remainingTime, setRemainingTime] = useState<number>(0)
+  const [isRunning, setIsRunning] = useState<boolean>(false)
+  const [status, setStatus] = useState<string>('')
+  // Add transaction history state
+  const [txHistory, setTxHistory] = useState<
+    Array<{
+      txHash: string
+      timestamp: Date
+      amount: string
+      receiver: string
+    }>
+  >([])
+  const timerRef = useRef<number | null>(null)
+  const countdownRef = useRef<number | null>(null)
+
+  // Check if a session is active
+  const hasActiveSession = sessionConfig !== null
+
+  // Start the transaction agent
+  const startAgent = () => {
+    if (!hasActiveSession) {
+      message.error('No active session. Please select a session first.')
+      return
+    }
+
+    if (!receiver) {
+      message.error('Please enter a receiver address')
+      return
+    }
+
+    if (!amount || parseInt(amount) <= 0) {
+      message.error('Please enter a valid amount')
+      return
+    }
+
+    setIsRunning(true)
+    setRemainingTime(intervalTime)
+    setStatus('Agent started')
+
+    // Start countdown timer
+    countdownRef.current = window.setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev <= 1) {
+          return intervalTime // Reset the timer when it reaches 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    // Immediate first transaction
+    sendAgentTransaction()
+
+    // Setup interval for recurring transactions
+    timerRef.current = window.setInterval(() => {
+      sendAgentTransaction()
+    }, intervalTime * 1000)
+  }
+
+  // Stop the transaction agent
+  const stopAgent = () => {
+    if (timerRef.current !== null) {
+      window.clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    if (countdownRef.current !== null) {
+      window.clearInterval(countdownRef.current)
+      countdownRef.current = null
+    }
+
+    setIsRunning(false)
+    setRemainingTime(0)
+    setStatus('Agent stopped')
+  }
+
+  // Send a transaction using the active session
+  const sendAgentTransaction = async () => {
+    if (!sessionConfig) return
+
+    try {
+      // Use the amount directly as BigInt without conversion
+      const bigintAmount = BigInt(amount)
+      const txHash = await sendTransaction(
+        receiver as `0x${string}`,
+        bigintAmount
+      )
+
+      const now = new Date()
+      // Format date and time with seconds precision
+      const formattedTimestamp = `${now.toLocaleDateString()} ${now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+      const statusMessage = `Transaction sent at ${formattedTimestamp}!`
+
+      // Add to transaction history
+      setTxHistory((prev) => [
+        {
+          txHash,
+          timestamp: now,
+          amount,
+          receiver,
+        },
+        ...prev,
+      ])
+
+      setStatus(statusMessage)
+      message.success('Transaction sent successfully!')
+    } catch (error) {
+      setStatus(
+        `Error: ${error instanceof Error ? error.message : String(error)}`
+      )
+      showError(error)
+      // Stop the agent if there's an error
+      stopAgent()
+    }
+  }
+
+  // Format transaction hash for display
+  const formatTxHash = (hash: string) => {
+    if (!hash) return ''
+    return `${hash.substring(0, 10)}...${hash.substring(hash.length - 8)}`
+  }
+
+  // Format date with seconds precision
+  const formatDate = (date: Date) => {
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) window.clearInterval(timerRef.current)
+      if (countdownRef.current !== null)
+        window.clearInterval(countdownRef.current)
+    }
+  }, [])
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <Card className="mb-8 shadow-md">
+        <Title level={3}>Transaction Agent</Title>
+        <Text className="block mb-4">
+          This will periodically send transactions using your active session.
+        </Text>
+
+        {!hasActiveSession && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+            <Text type="warning">
+              No active session selected. Please go to the Dashboard to select
+              an active session.
+            </Text>
+          </div>
+        )}
+
+        <Form layout="vertical">
+          <Form.Item label="Receiver Address">
+            <Input
+              placeholder="0x..."
+              value={receiver}
+              onChange={(e) => setReceiver(e.target.value)}
+              disabled={isRunning}
+            />
+          </Form.Item>
+
+          <Form.Item label="Amount to Send (wei)">
+            <Input
+              type="text"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={isRunning}
+            />
+            <Text type="secondary" className="mt-1 block text-xs">
+              1 ETH = 10^18 wei. For 0.001 ETH, enter 1000000000000000 (10^15)
+            </Text>
+          </Form.Item>
+
+          <Form.Item label="Interval (seconds)">
+            <Input
+              type="number"
+              min="5"
+              value={intervalTime}
+              onChange={(e) => setIntervalTime(parseInt(e.target.value))}
+              disabled={isRunning}
+            />
+          </Form.Item>
+
+          <div className="mb-4">
+            <Text strong>Status:</Text> {status}
+          </div>
+
+          {isRunning && (
+            <div className="mb-4">
+              <Text strong>Next transaction in:</Text> {remainingTime} seconds
+            </div>
+          )}
+
+          <Form.Item>
+            <Space>
+              {!isRunning ? (
+                <Button
+                  type="primary"
+                  onClick={startAgent}
+                  disabled={!hasActiveSession}
+                >
+                  Start Agent
+                </Button>
+              ) : (
+                <Button danger onClick={stopAgent}>
+                  Stop Agent
+                </Button>
+              )}
+            </Space>
+          </Form.Item>
+        </Form>
+      </Card>
+
+      {/* Transaction History */}
+      {txHistory.length > 0 && (
+        <Card className="shadow-md" title="Transaction History">
+          <div className="overflow-y-auto max-h-80">
+            {txHistory.map((tx, index) => (
+              <div
+                key={index}
+                className="mb-4 p-3 border border-gray-200 rounded-md"
+              >
+                <div className="grid grid-cols-1 gap-1">
+                  <div>
+                    <Text strong>TX Hash:</Text>
+                    <Text copyable={{ text: tx.txHash }}>
+                      {formatTxHash(tx.txHash)}
+                    </Text>
+                  </div>
+                  <div>
+                    <Text strong>Time:</Text> {formatDate(tx.timestamp)}
+                  </div>
+                  <div>
+                    <Text strong>Amount:</Text> {tx.amount} wei
+                  </div>
+                  <div>
+                    <Text strong>Receiver:</Text>
+                    <Text copyable={{ text: tx.receiver }}>
+                      {tx.receiver.substring(0, 10)}...
+                      {tx.receiver.substring(tx.receiver.length - 8)}
+                    </Text>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
 function AppContent() {
   const { isConnected, logout } = useSSOStore()
   const navigate = useNavigate()
@@ -1149,6 +1469,12 @@ function AppContent() {
                     className="text-white hover:text-primary-100 font-medium"
                   >
                     Transfer Token
+                  </Link>
+                  <Link
+                    to="/agent"
+                    className="text-white hover:text-primary-100 font-medium"
+                  >
+                    Agent
                   </Link>
                 </>
               )}
@@ -1193,6 +1519,7 @@ function AppContent() {
           <Route path="/setup" element={<WalletSetup />} />
           <Route path="/dashboard/*" element={<WalletDashboard />} />
           <Route path="/transfer-token" element={<TransferToken />} />
+          <Route path="/agent" element={<AgentPage />} />
         </Routes>
       </main>
     </div>
