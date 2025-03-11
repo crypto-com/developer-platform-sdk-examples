@@ -44,3 +44,6 @@ export const CONTRACTS: ChainContracts = {
   accountFactory: '0x381539B4FC39eAe0Eb848f52cCA93F168a0e955D',
   accountPaymaster: '0xA7B450E91Bc126aa93C656750f9c940bfdc2f1e9',
 }
+
+export const NULL_ADDRESS =
+  '0x0000000000000000000000000000000000000000' as const
