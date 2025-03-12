@@ -6,14 +6,14 @@
 import { http, Address, createPublicClient, parseAbi, Hash } from 'viem'
 import { createZksyncSessionClient } from 'zksync-sso/client'
 import { SessionKeyModuleAbi } from 'zksync-sso/abi'
-import { 
-  SessionConfig, 
-  LimitType, 
-  Limit, 
-  ConstraintCondition, 
-  Constraint, 
-  CallPolicy, 
-  TransferPolicy 
+import {
+  SessionConfig,
+  LimitType,
+  Limit,
+  ConstraintCondition,
+  Constraint,
+  CallPolicy,
+  TransferPolicy,
 } from 'zksync-sso/utils'
 import { config } from 'dotenv'
 
@@ -40,29 +40,6 @@ const CONTRACTS = {
   accountFactory: '0x381539B4FC39eAe0Eb848f52cCA93F168a0e955D' as `0x${string}`,
   accountPaymaster: '0xA7B450E91Bc126aa93C656750f9c940bfdc2f1e9' as `0x${string}`,
 }
-
-// Define ABI for SessionCreated event
-const SESSION_ABI = [
-  {
-    type: 'event',
-    name: 'SessionCreated',
-    inputs: [
-      { type: 'address', name: 'account', indexed: true },
-      {
-        type: 'tuple',
-        name: 'sessionSpec',
-        components: [
-          { type: 'uint256', name: 'validUntil' },
-          { type: 'uint256', name: 'validAfter' },
-          { type: 'uint256', name: 'expiresAt' },
-          { type: 'string[]', name: 'permissions' },
-          { type: 'address', name: 'signer' },
-          { type: 'uint256', name: 'feeLimit' },
-        ],
-      },
-    ],
-  },
-] as const
 
 // Required environment variables
 const SESSION_KEY = process.env.SSO_WALLET_SESSION_KEY
@@ -157,7 +134,7 @@ async function fetchSessionConfig(
 
         const allCreatedLogs = await publicClient.getContractEvents({
           address: CONTRACTS.session,
-          abi: SESSION_ABI,
+          abi: SessionKeyModuleAbi,
           eventName: 'SessionCreated',
           fromBlock: scanFromBlock,
           toBlock: currentBlock,
@@ -184,7 +161,7 @@ async function fetchSessionConfig(
             try {
               const chunkLogs = await publicClient.getContractEvents({
                 address: CONTRACTS.session,
-                abi: SESSION_ABI,
+                abi: SessionKeyModuleAbi,
                 eventName: 'SessionCreated',
                 fromBlock: fromBlock,
                 toBlock: toBlock,
