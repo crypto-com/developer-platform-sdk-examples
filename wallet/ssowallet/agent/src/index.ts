@@ -3,7 +3,7 @@
  * Sends 1 wei to a specified address every minute using a session key
  */
 
-import { http, Address, createPublicClient, parseAbi } from 'viem'
+import { http, Address, createPublicClient, parseAbi, Hash } from 'viem'
 import { createZksyncSessionClient } from 'zksync-sso/client'
 import { SessionKeyModuleAbi } from 'zksync-sso/abi'
 import { config } from 'dotenv'
@@ -134,19 +134,11 @@ type SessionConfig = {
 type SessionCreatedLog = {
   args: {
     account: Address
-    sessionSpec: {
-      validUntil: bigint
-      validAfter: bigint
-      expiresAt: bigint
-      permissions: string[]
-      signer: Address
-      feeLimit: {
-        limit: bigint
-        limitType: number
-        period: bigint
-      }
-    }
+    sessionSpec: SessionConfig
+    sessionHash?: Hash
   }
+  transactionHash: Hash
+  blockNumber: bigint
 }
 
 // Function to fetch session config
@@ -326,44 +318,38 @@ async function fetchSessionConfig(
     const currentTimestamp = BigInt(Math.floor(Date.now() / 1000))
     console.log(`Current timestamp: ${currentTimestamp}`)
 
-    // Convert logs to typed SessionCreatedLog array
-    const typedLogs = createdLogs as unknown as SessionCreatedLog[]
-    console.log(`Processing ${typedLogs.length} logs for active sessions...`)
-
     // Filter out expired and revoked sessions
-    const activeSessions = typedLogs
+    const activeSessions = createdLogs
       .filter(log => {
+        const sessionSpec = log.args.sessionSpec
         console.log(
           `Checking session: ${JSON.stringify({
-            signer: log?.args?.sessionSpec?.signer,
-            expiresAt: log?.args?.sessionSpec?.expiresAt?.toString(),
+            signer: sessionSpec?.signer,
+            expiresAt: sessionSpec?.expiresAt?.toString(),
             account: log?.args?.account,
           })}`
         )
 
-        const isNotExpired =
-          log?.args?.sessionSpec && BigInt(log.args.sessionSpec.expiresAt) > currentTimestamp
-
+        const isNotExpired = sessionSpec && BigInt(sessionSpec.expiresAt) > currentTimestamp
         const isNotRevoked =
-          !(log as any)?.args?.sessionHash ||
-          !revokedSessionHashes.has((log as any).args.sessionHash)
+          !log?.args?.sessionHash || !revokedSessionHashes.has(log.args.sessionHash)
 
         if (!isNotExpired) {
           console.log(
-            `Skipping expired session: ${log?.args?.sessionSpec?.signer}, expires: ${log?.args?.sessionSpec?.expiresAt}`
+            `Skipping expired session: ${sessionSpec?.signer}, expires: ${sessionSpec?.expiresAt}`
           )
         }
 
         if (!isNotRevoked) {
-          console.log(`Skipping revoked session: ${log?.args?.sessionSpec?.signer}`)
+          console.log(`Skipping revoked session: ${sessionSpec?.signer}`)
         }
 
         return isNotExpired && isNotRevoked
       })
       // Sort by block number (most recent first)
       .sort((a, b) => {
-        const blockNumA = (createdLogs.find(l => l === (a as any))?.blockNumber || 0n) as bigint
-        const blockNumB = (createdLogs.find(l => l === (b as any))?.blockNumber || 0n) as bigint
+        const blockNumA = a.blockNumber || 0n
+        const blockNumB = b.blockNumber || 0n
         return blockNumA < blockNumB ? 1 : -1
       })
 
@@ -385,49 +371,20 @@ async function fetchSessionConfig(
       )
     }
 
-    // Map sessions to a more usable format, similar to useSSOStore.ts
-    const sessionData = filteredSessions.map(log => ({
-      session: {
-        signer: log.args.sessionSpec.signer,
-        expiresAt: log.args.sessionSpec.expiresAt,
-        feeLimit: {
-          limitType: log.args.sessionSpec.feeLimit.limitType as LimitType,
-          limit: log.args.sessionSpec.feeLimit.limit,
-          period: log.args.sessionSpec.feeLimit.period,
-        },
-        callPolicies: [] as CallPolicy[],
-        transferPolicies: [
-          // Add a transfer policy that allows sending to the target address
-          {
-            target: TARGET_ADDRESS as Address,
-            maxValuePerUse: 1000000000000000000n, // 1 ETH (much more than needed)
-            valueLimit: {
-              limitType: LimitType.Unlimited,
-              limit: 0n,
-              period: 0n,
-            },
-          },
-        ] as TransferPolicy[],
-      },
-      sessionId: (log as any).args.sessionHash,
-      blockNumber: (createdLogs.find(l => l === (log as any))?.blockNumber || 0n) as bigint,
-    }))
-
     // Log session data for debugging
-    if (sessionData.length > 0) {
+    if (filteredSessions.length > 0) {
       console.log(
         'Active session details:',
-        sessionData.map(session => ({
-          signer: session.session.signer,
-          expiresAt: session.session.expiresAt.toString(),
-          feeLimit: session.session.feeLimit.limit.toString(),
-          sessionId: session.sessionId,
+        filteredSessions.map(log => ({
+          signer: log.args.sessionSpec.signer,
+          expiresAt: log.args.sessionSpec.expiresAt.toString(),
+          sessionId: log.args.sessionHash,
         }))
       )
     }
 
     // Return the most recent session config or null if none found
-    return sessionData.length > 0 ? sessionData[0].session : null
+    return filteredSessions.length > 0 ? filteredSessions[0].args.sessionSpec : null
   } catch (error) {
     console.error('Failed to fetch session config:', error)
     return null
@@ -449,20 +406,26 @@ async function sendTransaction(
     console.log('- Session Config Details:')
     console.log(`  - Signer: ${sessionConfig.signer}`)
     console.log(`  - ExpiresAt: ${sessionConfig.expiresAt.toString()}`)
-    console.log(`  - CallPolicies: ${sessionConfig.callPolicies.length}`)
-    console.log(`  - TransferPolicies: ${sessionConfig.transferPolicies.length}`)
-    console.log(`  - FeeLimit Type: ${LimitType[sessionConfig.feeLimit.limitType]}`)
-    console.log(`  - FeeLimit: ${sessionConfig.feeLimit.limit.toString()}`)
-    console.log(`  - FeeLimit Period: ${sessionConfig.feeLimit.period.toString()}`)
+    console.log(`  - CallPolicies: ${sessionConfig.callPolicies?.length || 0}`)
+    console.log(`  - TransferPolicies: ${sessionConfig.transferPolicies?.length || 0}`)
 
-    
+    if (sessionConfig.feeLimit) {
+      console.log(`  - FeeLimit Type: ${LimitType[sessionConfig.feeLimit.limitType]}`)
+      console.log(`  - FeeLimit: ${sessionConfig.feeLimit.limit.toString()}`)
+      console.log(`  - FeeLimit Period: ${sessionConfig.feeLimit.period.toString()}`)
+    }
+
     // Log transfer policies for debugging
-    sessionConfig.transferPolicies.forEach((policy, index) => {
-      console.log(`  - TransferPolicy ${index + 1}:`)
-      console.log(`    - Target: ${policy.target}`)
-      console.log(`    - MaxValuePerUse: ${policy.maxValuePerUse.toString()}`)
-      console.log(`    - ValueLimit Type: ${LimitType[policy.valueLimit.limitType]}`)
-    })
+    if (sessionConfig.transferPolicies && sessionConfig.transferPolicies.length > 0) {
+      sessionConfig.transferPolicies.forEach((policy, index) => {
+        console.log(`  - TransferPolicy ${index + 1}:`)
+        console.log(`    - Target: ${policy.target}`)
+        console.log(`    - MaxValuePerUse: ${policy.maxValuePerUse.toString()}`)
+        if (policy.valueLimit) {
+          console.log(`    - ValueLimit Type: ${LimitType[policy.valueLimit.limitType]}`)
+        }
+      })
+    }
 
     // Create session client using the session key
     const sessionClient = createZksyncSessionClient({
@@ -471,7 +434,7 @@ async function sendTransaction(
       sessionKey: SESSION_KEY as `0x${string}`,
       contracts: CONTRACTS,
       address: WALLET_ADDRESS as `0x${string}`,
-      sessionConfig,
+      sessionConfig, // Use the exact session config from the blockchain
     })
 
     // Ensure amount is a valid BigInt
@@ -495,29 +458,20 @@ async function sendTransaction(
       valueToSend = 1n
     }
 
-    // Convert BigInt value to string for logging/display
-    const valueToSendString = valueToSend.toString()
-
     console.log(`Converted amount to BigInt: ${valueToSend}`)
 
     // Creating a properly formatted transaction object
-    const txParams: {
-      to: `0x${string}`
-      value: bigint
-      data?: `0x${string}`
-    } = {
+    const txParams = {
       to: TARGET_ADDRESS as `0x${string}`,
       value: valueToSend,
+      ...(data ? { data } : {}),
     }
 
     console.log('--------------------------------')
     console.log('Transaction parameters:')
     console.log(`- to: ${txParams.to}`)
     console.log(`- value: ${txParams.value.toString()}`)
-
-    // Only add data if it's provided and valid
     if (data) {
-      txParams.data = data
       console.log(`- data: ${data}`)
     }
 
@@ -527,23 +481,12 @@ async function sendTransaction(
       JSON.stringify({
         to: txParams.to,
         value: txParams.value.toString(),
-        data: txParams.data || 'undefined',
+        data: data || 'undefined',
       })
     )
 
-    // Create a clean transaction object with correct types
-    const cleanTxParams = {
-      to: txParams.to,
-      value: txParams.value,
-      ...(data ? { data } : {}),
-    }
-
-    // Send the transaction with properly formatted parameters - explicitly use object parameter syntax
-    const tx = await sessionClient.sendTransaction({
-      to: txParams.to,
-      value: valueToSend, // Use the original BigInt value directly, not from txParams
-      ...(data ? { data } : {}),
-    })
+    // Send the transaction with properly formatted parameters
+    const tx = await sessionClient.sendTransaction(txParams)
     console.log(`Transaction sent: ${tx}`)
     return tx
   } catch (error) {
@@ -564,6 +507,14 @@ async function sendTransaction(
         console.error(`- Target address: ${TARGET_ADDRESS}`)
         console.error('- ETH transfers (if sending ETH)')
         console.error('- Contract calls (if calling a contract)')
+      } else if (error.message.includes('Session is not active')) {
+        console.error('SESSION ERROR: The session is not active on the blockchain.')
+        console.error('This usually happens when:')
+        console.error('1. The session has been revoked.')
+        console.error('2. The session has expired.')
+        console.error('3. The session was created with different parameters than what we have.')
+        console.error('')
+        console.error('Try creating a new session with the correct permissions.')
       }
     }
 
