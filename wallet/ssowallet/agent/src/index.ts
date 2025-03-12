@@ -6,6 +6,15 @@
 import { http, Address, createPublicClient, parseAbi, Hash } from 'viem'
 import { createZksyncSessionClient } from 'zksync-sso/client'
 import { SessionKeyModuleAbi } from 'zksync-sso/abi'
+import { 
+  SessionConfig, 
+  LimitType, 
+  Limit, 
+  ConstraintCondition, 
+  Constraint, 
+  CallPolicy, 
+  TransferPolicy 
+} from 'zksync-sso/utils'
 import { config } from 'dotenv'
 
 // Load environment variables
@@ -77,58 +86,6 @@ const publicClient = createPublicClient({
   chain: CHAIN,
   transport: http(),
 })
-
-// Define the types needed for SessionConfig
-enum LimitType {
-  Unlimited = 0,
-  Lifetime = 1,
-  Allowance = 2,
-}
-
-type Limit = {
-  limitType: LimitType
-  limit: bigint
-  period: bigint
-}
-
-enum ConstraintCondition {
-  Unconstrained = 0,
-  Equal = 1,
-  Greater = 2,
-  Less = 3,
-  GreaterEqual = 4,
-  LessEqual = 5,
-  NotEqual = 6,
-}
-
-type Constraint = {
-  index: bigint
-  condition: ConstraintCondition
-  refValue: `0x${string}`
-  limit: Limit
-}
-
-type CallPolicy = {
-  target: Address
-  valueLimit: Limit
-  maxValuePerUse: bigint
-  selector: `0x${string}`
-  constraints: Constraint[]
-}
-
-type TransferPolicy = {
-  target: Address
-  maxValuePerUse: bigint
-  valueLimit: Limit
-}
-
-type SessionConfig = {
-  signer: Address
-  expiresAt: bigint
-  feeLimit: Limit
-  callPolicies: CallPolicy[]
-  transferPolicies: TransferPolicy[]
-}
 
 // Define a type for the event log with args
 type SessionCreatedLog = {
