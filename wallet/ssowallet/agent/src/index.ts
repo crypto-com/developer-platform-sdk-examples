@@ -140,7 +140,11 @@ type SessionCreatedLog = {
       expiresAt: bigint
       permissions: string[]
       signer: Address
-      feeLimit: bigint
+      feeLimit: {
+        limit: bigint
+        limitType: number
+        period: bigint
+      }
     }
   }
 }
@@ -387,9 +391,9 @@ async function fetchSessionConfig(
         signer: log.args.sessionSpec.signer,
         expiresAt: log.args.sessionSpec.expiresAt,
         feeLimit: {
-          limitType: LimitType.Lifetime,
-          limit: log.args.sessionSpec.feeLimit,
-          period: 0n,
+          limitType: log.args.sessionSpec.feeLimit.limitType as LimitType,
+          limit: log.args.sessionSpec.feeLimit.limit,
+          period: log.args.sessionSpec.feeLimit.period,
         },
         callPolicies: [] as CallPolicy[],
         transferPolicies: [
@@ -447,7 +451,11 @@ async function sendTransaction(
     console.log(`  - ExpiresAt: ${sessionConfig.expiresAt.toString()}`)
     console.log(`  - CallPolicies: ${sessionConfig.callPolicies.length}`)
     console.log(`  - TransferPolicies: ${sessionConfig.transferPolicies.length}`)
+    console.log(`  - FeeLimit Type: ${LimitType[sessionConfig.feeLimit.limitType]}`)
+    console.log(`  - FeeLimit: ${sessionConfig.feeLimit.limit.toString()}`)
+    console.log(`  - FeeLimit Period: ${sessionConfig.feeLimit.period.toString()}`)
 
+    
     // Log transfer policies for debugging
     sessionConfig.transferPolicies.forEach((policy, index) => {
       console.log(`  - TransferPolicy ${index + 1}:`)
