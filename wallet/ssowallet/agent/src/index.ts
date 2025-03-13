@@ -46,6 +46,9 @@ const SESSION_KEY = process.env.SSO_WALLET_SESSION_KEY
 const WALLET_ADDRESS = process.env.SSO_WALLET_ADDRESS
 const TARGET_ADDRESS = process.env.TARGET_ADDRESS
 const SESSION_PUBKEY = process.env.SSO_WALLET_SESSION_PUBKEY
+const SEND_INTERVAL_SECONDS = process.env.SEND_INTERVAL_SECONDS
+  ? parseInt(process.env.SEND_INTERVAL_SECONDS)
+  : 60
 
 // Validate environment variables
 if (!SESSION_KEY) {
@@ -463,6 +466,7 @@ async function startAgent() {
   console.log(`Target address: ${TARGET_ADDRESS}`)
   console.log(`Session contract address: ${CONTRACTS.session}`)
   console.log(`Chain ID: ${CHAIN.id}`)
+  console.log(`Transaction interval: ${SEND_INTERVAL_SECONDS} seconds`)
 
   // Check if we're looking for a specific session by public key
   if (SESSION_PUBKEY) {
@@ -519,7 +523,7 @@ async function startAgent() {
     )
     console.log('Starting transaction schedule')
 
-    // Schedule transactions every minute
+    // Schedule transactions using the configured interval
     setInterval(async () => {
       const timestamp = new Date().toLocaleString()
       console.log(`[${timestamp}] Sending 1 wei transaction...`)
@@ -530,7 +534,7 @@ async function startAgent() {
       } else {
         console.error(`[${timestamp}] Failed to send transaction`)
       }
-    }, 60000) // 60000 ms = 1 minute
+    }, SEND_INTERVAL_SECONDS * 1000) // Convert seconds to milliseconds
 
     // Send an initial transaction
     await sendTransaction(sessionConfig, 1n, undefined)
