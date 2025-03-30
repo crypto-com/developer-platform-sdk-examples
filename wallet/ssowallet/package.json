@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\""
   },
   "dependencies": {
+    "@ant-design/icons": "^5.6.1",
     "@simplewebauthn/browser": "^10.0",
     "@simplewebauthn/server": "^10.0",
     "@simplewebauthn/types": "^10.0",
