@@ -220,6 +220,7 @@ export function WalletDashboard() {
           layout="vertical"
           onFinish={handleSend}
           initialValues={{ recipient: '', amount: '' }}
+          className="transaction-form"
         >
           <Form.Item
             name="recipient"
@@ -232,7 +233,28 @@ export function WalletDashboard() {
               },
             ]}
           >
-            <Input placeholder="0x..." />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Form.Item name="recipient" noStyle>
+                <Input placeholder="0x..." />
+              </Form.Item>
+              <Button
+                type="default"
+                onClick={() => {
+                  const nullAddress =
+                    '0x0000000000000000000000000000000000000000'
+                  form.setFields([
+                    {
+                      name: 'recipient',
+                      value: nullAddress,
+                      touched: true,
+                      validating: false,
+                    },
+                  ])
+                }}
+              >
+                Set Null Address
+              </Button>
+            </div>
           </Form.Item>
 
           <Form.Item
@@ -247,7 +269,34 @@ export function WalletDashboard() {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              style={{
+                width: '100%',
+                backgroundColor: '#1890ff',
+                borderColor: '#1890ff',
+                color: '#ffffff',
+                height: '40px',
+                fontSize: '16px',
+                fontWeight: 500,
+                boxShadow: '0 2px 0 rgba(0,0,0,0.045)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                const target = e.currentTarget
+                target.style.backgroundColor = '#40a9ff'
+                target.style.borderColor = '#40a9ff'
+                target.style.boxShadow = '0 4px 8px rgba(24,144,255,0.35)'
+              }}
+              onMouseLeave={(e) => {
+                const target = e.currentTarget
+                target.style.backgroundColor = '#1890ff'
+                target.style.borderColor = '#1890ff'
+                target.style.boxShadow = '0 2px 0 rgba(0,0,0,0.045)'
+              }}
+            >
               Send Transaction
             </Button>
           </Form.Item>
@@ -356,7 +405,10 @@ export function WalletDashboard() {
                     </Text>
                   )}
                 </div>
-                <div className="session-actions">
+                <div
+                  className="session-actions"
+                  style={{ display: 'flex', gap: '12px', alignItems: 'center' }}
+                >
                   <Button
                     type={
                       sessionConfig?.signer === session.session.signer
@@ -366,6 +418,59 @@ export function WalletDashboard() {
                     size="small"
                     onClick={() => handleSessionSelect(session.session)}
                     disabled={expired}
+                    style={{
+                      backgroundColor:
+                        sessionConfig?.signer === session.session.signer
+                          ? '#1890ff'
+                          : '#ffffff',
+                      borderColor:
+                        sessionConfig?.signer === session.session.signer
+                          ? '#1890ff'
+                          : '#d9d9d9',
+                      color:
+                        sessionConfig?.signer === session.session.signer
+                          ? '#ffffff'
+                          : '#000000',
+                      fontWeight:
+                        sessionConfig?.signer === session.session.signer
+                          ? 500
+                          : 400,
+                      visibility: 'visible',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '70px',
+                      height: '24px',
+                      padding: '0 8px',
+                      fontSize: '14px',
+                      opacity: 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      const target = e.currentTarget
+                      if (!expired) {
+                        if (sessionConfig?.signer === session.session.signer) {
+                          target.style.backgroundColor = '#40a9ff'
+                          target.style.borderColor = '#40a9ff'
+                        } else {
+                          target.style.backgroundColor = '#fafafa'
+                          target.style.borderColor = '#40a9ff'
+                          target.style.color = '#40a9ff'
+                        }
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      const target = e.currentTarget
+                      if (!expired) {
+                        if (sessionConfig?.signer === session.session.signer) {
+                          target.style.backgroundColor = '#1890ff'
+                          target.style.borderColor = '#1890ff'
+                        } else {
+                          target.style.backgroundColor = '#ffffff'
+                          target.style.borderColor = '#d9d9d9'
+                          target.style.color = '#000000'
+                        }
+                      }
+                    }}
                   >
                     {sessionConfig?.signer === session.session.signer
                       ? 'Selected'
@@ -376,6 +481,12 @@ export function WalletDashboard() {
                     size="small"
                     loading={revokeLoading === session.sessionId}
                     onClick={() => handleRevoke(session.sessionId)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '60px',
+                    }}
                   >
                     Revoke
                   </Button>

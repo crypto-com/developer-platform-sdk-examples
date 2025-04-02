@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import time
 from eth_abi import encode
 from eth_utils import remove_0x_prefix

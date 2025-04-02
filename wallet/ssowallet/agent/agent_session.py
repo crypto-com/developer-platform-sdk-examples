@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import time
 from agent_config import logger, SESSION_KEY_MODULE_ABI, CONTRACTS, LimitType
 
@@ -316,10 +315,12 @@ def parse_session_config(session_spec):
                             }
                         )
 
-                    # Handle selector
+                    # Handle selector - ensure it has 0x prefix
                     selector_str = (
                         selector.hex() if hasattr(selector, "hex") else str(selector)
                     )
+                    if selector_str and not selector_str.startswith("0x"):
+                        selector_str = "0x" + selector_str
 
                     call_policies_parsed.append(
                         {
@@ -365,14 +366,17 @@ def parse_session_config(session_spec):
                             }
                         )
 
+                    # Handle selector - ensure it has 0x prefix
+                    selector_str = (
+                        selector.hex() if hasattr(selector, "hex") else str(selector)
+                    )
+                    if selector_str and not selector_str.startswith("0x"):
+                        selector_str = "0x" + selector_str
+
                     call_policies_parsed.append(
                         {
                             "target": target,
-                            "selector": (
-                                selector.hex()
-                                if hasattr(selector, "hex")
-                                else str(selector)
-                            ),
+                            "selector": selector_str,
                             "maxValuePerUse": max_value_per_use,
                             "valueLimit": value_limit_parsed,
                             "constraints": constraints_parsed,
@@ -462,14 +466,17 @@ def parse_session_config(session_spec):
                         }
                     )
 
+                # Handle selector - ensure it has 0x prefix
+                selector_str = (
+                    selector.hex() if hasattr(selector, "hex") else str(selector)
+                )
+                if selector_str and not selector_str.startswith("0x"):
+                    selector_str = "0x" + selector_str
+
                 call_policies_parsed.append(
                     {
                         "target": target,
-                        "selector": (
-                            selector.hex()
-                            if hasattr(selector, "hex")
-                            else str(selector)
-                        ),
+                        "selector": selector_str,
                         "maxValuePerUse": max_value_per_use,
                         "valueLimit": value_limit_parsed,
                         "constraints": constraints_parsed,

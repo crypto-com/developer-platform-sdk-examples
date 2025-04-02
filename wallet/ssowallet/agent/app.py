@@ -2,6 +2,7 @@ import os
 import datetime
 import time
 import threading
+import asyncio
 
 # Now import and check the path
 import agent_main
@@ -25,7 +26,7 @@ def run_agent_loop():
 
     while not stop_thread:
         try:
-            agent_main.main()
+            asyncio.run(agent_main.main())
             time.sleep(interval)
         except Exception as e:
             print(f"Error in agent loop: {e}")

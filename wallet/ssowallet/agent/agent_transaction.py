@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import time
 import os
 from web3 import Web3
