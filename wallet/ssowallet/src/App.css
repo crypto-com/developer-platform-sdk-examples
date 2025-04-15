@@ -1,8 +1,8 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .logo {
@@ -396,4 +396,22 @@
 
 .message-with-close:hover {
   opacity: 0.8;
+}
+
+.transaction-card {
+  position: relative;
+  margin-bottom: 24px;
+  border: 1px solid #d9d9d9;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.transaction-card:hover {
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.transaction-form {
+  position: relative;
 }

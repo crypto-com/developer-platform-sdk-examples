@@ -1,10 +1,12 @@
 import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom'
-import { Button } from 'antd'
+import { Button, Layout } from 'antd'
 import { useSSOStore } from '../services/useSSOStore'
 import { WalletSetup } from './WalletSetup'
 import { WalletDashboard } from './WalletDashboard'
 import { TransferToken } from './TransferToken'
 import { AgentPage } from './AgentPage'
+
+const { Header, Content } = Layout
 
 export function AppContent() {
   const { isConnected, logout } = useSSOStore()
@@ -16,10 +18,10 @@ export function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="bg-primary-600 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
+    <Layout className="min-h-screen">
+      <Header className="bg-primary-600 shadow-lg p-0 fixed w-full z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex justify-between items-center h-full">
             <div className="flex items-center space-x-8">
               <Link
                 to="/"
@@ -67,38 +69,43 @@ export function AppContent() {
             )}
           </div>
         </div>
-      </nav>
+      </Header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white">
-        <Routes>
-          <Route path="*" element={<Navigate to="/transfer-token" replace />} />
-          <Route
-            path="/"
-            element={
-              <div className="text-center py-16">
-                <h1 className="text-5xl font-bold text-primary-900 mb-8">
-                  Welcome to SSO Wallet
-                </h1>
-                <p className="text-xl text-primary-700">
-                  Your secure gateway to Web3
-                </p>
-                <div className="mt-12">
-                  <Link
-                    to="/setup"
-                    className="inline-block px-8 py-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    Get Started
-                  </Link>
+      <Content className="mt-16 min-h-[calc(100vh-64px)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Routes>
+            <Route
+              path="*"
+              element={<Navigate to="/transfer-token" replace />}
+            />
+            <Route
+              path="/"
+              element={
+                <div className="text-center py-16">
+                  <h1 className="text-5xl font-bold text-primary-900 mb-8">
+                    Welcome to SSO Wallet
+                  </h1>
+                  <p className="text-xl text-primary-700">
+                    Your secure gateway to Web3
+                  </p>
+                  <div className="mt-12">
+                    <Link
+                      to="/setup"
+                      className="inline-block px-8 py-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    >
+                      Get Started
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            }
-          />
-          <Route path="/setup" element={<WalletSetup />} />
-          <Route path="/dashboard/*" element={<WalletDashboard />} />
-          <Route path="/transfer-token" element={<TransferToken />} />
-          <Route path="/agent" element={<AgentPage />} />
-        </Routes>
-      </main>
-    </div>
+              }
+            />
+            <Route path="/setup" element={<WalletSetup />} />
+            <Route path="/dashboard/*" element={<WalletDashboard />} />
+            <Route path="/transfer-token" element={<TransferToken />} />
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </div>
+      </Content>
+    </Layout>
   )
 }

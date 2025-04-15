@@ -1,17 +1,15 @@
-#!/usr/bin/env python3
 import os
-import argparse
 import logging
 from web3 import Web3
-
-
 from dotenv import load_dotenv
 
-from agent_transaction import (
-    prepare_transaction,
-    sign_transaction,
-    send_transaction,
-    wait_for_transaction,
+from agent_swap import (
+    deposit_zkCRO,
+    approve_WZKCRO,
+    swap_WZKCRO_to_VUSD,
+    approve_VUSD,
+    swap_VUSD_to_WZKCRO,
+    unwrap_WZKCRO,
 )
 from agent_session import fetch_session_config
 
@@ -24,7 +22,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# Constants
+# Chain configuration
 CHAIN = {
     "id": 240,
     "name": "Cronos zkEVM Testnet",
@@ -35,19 +33,6 @@ CHAIN = {
     },
     "rpcUrls": {"default": {"http": ["https://seed.testnet.zkevm.cronos.org/"]}},
 }
-
-CONTRACTS = {
-    "session": "0xfebC82bBFC6FB8666AC45fa8a601DfA34Ce30710",
-    "passkey": "0x0A019BD60E42b9d18413C710992B96E69dFFC5A0",
-    "accountFactory": "0x381539B4FC39eAe0Eb848f52cCA93F168a0e955D",
-    "accountPaymaster": "0xA7B450E91Bc126aa93C656750f9c940bfdc2f1e9",
-}
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="SSO Wallet Transaction Agent")
-    parser.add_argument("--amount", type=int, default=1, help="Amount to send in wei")
-    return parser.parse_args()
 
 
 def get_session_config():
@@ -70,45 +55,46 @@ def get_session_config():
     return session_config
 
 
-def main():
-    args = parse_args()
-    logger.info("Starting SSO Wallet Transaction Agent...")
+async def main():
+    """Main function to execute swap based on SWAP_MODE"""
+    logger.info("Starting SSO Wallet Swap Agent...")
 
     try:
         # Get session configuration
         session_config = get_session_config()
         logger.info(f"Session config loaded: {session_config}")
 
-        # Prepare transaction
-        tx_params = prepare_transaction(session_config, amount=args.amount)
-        if not tx_params:
-            raise Exception("Failed to prepare transaction")
+        # Initialize Web3
+        web3 = Web3(Web3.HTTPProvider(CHAIN["rpcUrls"]["default"]["http"][0]))
 
-        # Sign transaction
-        signed_tx = sign_transaction(tx_params, session_config)
-        if not signed_tx:
-            raise Exception("Failed to sign transaction")
+        # Get swap mode and amount from environment
+        swap_mode = os.getenv("SWAP_MODE", "VUSD_TO_ZKCRO")
+        amount = float(os.getenv("SWAP_AMOUNT", "1.0"))
 
-        # Send transaction
-        tx_hash = send_transaction(signed_tx)
-        if not tx_hash:
-            raise Exception("Failed to send transaction")
-
-        logger.info(f"Transaction sent successfully: {tx_hash}")
-
-        # Wait for transaction confirmation
-        receipt = wait_for_transaction(tx_hash)
-        if receipt:
-            logger.info(f"Transaction confirmed in block {receipt['blockNumber']}")
+        if swap_mode == "ZKCRO_TO_VUSD":
+            logger.info("Executing ZKCRO to VUSD swap...")
+            await deposit_zkCRO(web3, session_config, amount)
+            await approve_WZKCRO(web3, session_config, amount)
+            await swap_WZKCRO_to_VUSD(web3, session_config, amount)
+        elif swap_mode == "VUSD_TO_ZKCRO":
+            logger.info("Executing VUSD to ZKCRO swap...")
+            await approve_VUSD(web3, session_config, amount)
+            await swap_VUSD_to_WZKCRO(web3, session_config, amount)
+            await unwrap_WZKCRO(web3, session_config, amount)
         else:
-            logger.info("Transaction not confirmed within timeout period")
+            raise ValueError(
+                f"Invalid SWAP_MODE: {swap_mode}. Must be either 'ZKCRO_TO_VUSD' or 'VUSD_TO_ZKCRO'"
+            )
+
+        logger.info("Swap completed successfully!")
+        return 0
 
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         return 1
 
-    return 0
-
 
 if __name__ == "__main__":
-    exit(main())
+    import asyncio
+
+    exit(asyncio.run(main()))
