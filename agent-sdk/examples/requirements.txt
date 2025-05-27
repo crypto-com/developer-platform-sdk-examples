@@ -15,7 +15,7 @@ charset-normalizer==3.4.1
 ckzg==2.1.1
 click==8.1.8
 crypto-com-developer-platform-client==1.0.9
--e git+ssh://git@github.com/crypto-com/agent-client-py.git@1316af66b0d020a921a7110ca62e71dd290f639a#egg=cryptocom_agent_client
+cryptocom-agent-client==1.0.8
 cytoolz==1.0.1
 defusedxml==0.7.1
 discord.py==2.5.2
