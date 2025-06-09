@@ -1,45 +1,58 @@
+#!/usr/bin/env python3
+"""
+Telegram Bot Example
+
+This example demonstrates how to use the existing Telegram bot functionality
+with the crypto_com_agent_client library. The bot will:
+
+1. Load the TELEGRAM_BOT_TOKEN from .env file
+2. Ask user to choose LLM provider (OpenAI or Grok3)
+3. Initialize the agent with selected provider and Telegram plugin
+4. Start the Telegram bot to handle user messages
+
+Prerequisites:
+1. Create a .env file with TELEGRAM_BOT_TOKEN
+2. Set up your Telegram bot via @BotFather
+3. Install dependencies: python-telegram-bot is already in pyproject.toml
+4. For OpenAI: Set OPENAI_API_KEY in .env
+5. For Grok3: Set GROK_API_KEY in .env
+
+Environment Variables:
+- TELEGRAM_BOT_TOKEN: Required - Your Telegram bot token
+- OPENAI_API_KEY: Required for OpenAI provider
+- GROK_API_KEY: Required for Grok3 provider  
+- DEBUG_LOGGING: Optional - Set to "true" to enable debug logging (default: false)
+
+Usage:
+    python bot.py
+    
+    # To enable debug logging:
+    DEBUG_LOGGING=true python bot.py
+"""
+
 import os
 from datetime import datetime
 import pytz
-from telegram import Update, User, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.constants import ParseMode
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-    MessageHandler,
-    filters,
-)
-import requests
-import json
-from urllib.parse import quote
+from crypto_com_agent_client import Agent, tool, SQLitePlugin
+from crypto_com_agent_client.lib.enums.provider_enum import Provider
+from dotenv import load_dotenv
 
-# Get bot token from environment variable
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Load environment variables from .env file
+load_dotenv()
 
-if not BOT_TOKEN:
-    raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set!")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY environment variable is not set!")
-
-# Add context storage for each user
-user_contexts = {}
+# Custom storage for persistence (optional)
+custom_storage = SQLitePlugin(db_path="telegram_agent_state.db")
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Example custom tool that the bot can use
+@tool
+def get_time() -> str:
     """
-    Handle the /start command.
+    Get the current local and UTC time.
 
-    Args:
-        update (Update): The update object containing message data
-        context (ContextTypes.DEFAULT_TYPE): The context object for the handler
+    Returns:
+        str: Current time information in both UTC and local timezone
     """
-    await update.message.reply_text("Hi! I am a bot. Use /time to get current time.")
-
-
-async def get_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Send current local and UTC time when the command /time is issued."""
     # Get current time in UTC
     utc_time = datetime.now(pytz.UTC)
 
@@ -52,179 +65,142 @@ async def get_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Local: {local_time.strftime('%Y-%m-%d %H:%M:%S')}"
     )
 
-    await update.message.reply_text(message)
+    return message
 
 
-async def debug_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def get_llm_choice():
     """
-    Display detailed user and chat information for debugging purposes.
-
-    Args:
-        update (Update): The update object containing message data
-        context (ContextTypes.DEFAULT_TYPE): The context object for the handler
+    Ask user to choose which LLM provider to use.
 
     Returns:
-        Sends a formatted message containing user ID, name, username, language,
-        bot status, and chat ID.
+        str: 'openai' or 'grok3'
     """
-    user: User = update.effective_user
+    print("\nChoose your LLM provider:")
+    print("1. OpenAI (gpt-4o-mini)")
+    print("2. Grok3")
 
-    debug_message = (
-        f"🔍 Debug Information:\n\n"
-        f"User ID: {user.id}\n"
-        f"First Name: {user.first_name}\n"
-        f"Last Name: {user.last_name if user.last_name else 'Not set'}\n"
-        f"Username: {user.username if user.username else 'Not set'}\n"
-        f"Language: {user.language_code if user.language_code else 'Not set'}\n"
-        f"Is Bot: {user.is_bot}\n"
-        f"Chat ID: {update.effective_chat.id}"
-    )
+    while True:
+        choice = input("\nEnter your choice (1 for OpenAI, 2 for Grok3): ").strip()
 
-    await update.message.reply_text(debug_message)
-
-
-def shorten_link(url: str):
-    """
-    Shorten the given URL using TinyURL's API.
-
-    Args:
-        url (str): The original URL to be shortened
-
-    Returns:
-        str: The shortened URL if successful, otherwise returns the original URL
-    """
-    try:
-        encoded_url = quote(url)
-        response = requests.get(
-            f"https://tinyurl.com/api-create.php?url={encoded_url}",
-            timeout=5,  # Add timeout
-        )
-        response.raise_for_status()
-        return response.text
-    except requests.exceptions.RequestException:
-        return url
-
-
-async def send_query(query: str, context: list = None):
-    """
-    Send a query to the AI Agent Service and get the response.
-
-    Args:
-        query (str): The user's query text to be processed
-        context (list): Optional context from previous interactions
-
-    Returns:
-        dict: The JSON response from the AI service if successful, None otherwise
-    """
-    url = "http://localhost:8000/api/v1/cdc-ai-agent-service/query"
-
-    payload = {
-        "query": query,
-        "options": {
-            "openAI": {"apiKey": OPENAI_API_KEY},
-            "context": context,
-        },
-    }
-
-    headers = {"Content-Type": "application/json"}
-
-    try:
-        response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        return None
-
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle regular text messages by processing them through the AI chat service."""
-    message_text = update.message.text
-    user_id = update.effective_user.id
-
-    # Initialize context for new users
-    if user_id not in user_contexts:
-        user_contexts[user_id] = []
-
-    # Send query to AI Agent Service with context
-    response = await send_query(message_text, user_contexts[user_id])
-
-    if response:
-        # Update context if response has context
-        if "context" in response:
-            user_contexts[user_id].extend(response["context"])
-            # Keep only the latest 10 context entries
-            if len(user_contexts[user_id]) > 10:
-                user_contexts[user_id] = user_contexts[user_id][-10:]
-
-        if response.get("hasErrors"):
-            await update.message.reply_text(
-                "Sorry, there was an error processing your request."
-            )
+        if choice == "1":
+            return "openai"
+        elif choice == "2":
+            return "grok3"
         else:
-            # Process each result from the AI agent first
-            for result in response.get("results", []):
-                status = result.get("status", "No status")
-                await update.message.reply_text(f"🤖 {status}")
+            print("Invalid choice. Please enter 1 or 2.")
 
-                if "data" in result:
-                    data = result["data"]
-                    if isinstance(data, dict) and "magicLink" in data:
-                        magic_link = data["magicLink"]
-                        shortened_link = shorten_link(magic_link)
-                        keyboard = [
-                            [
-                                InlineKeyboardButton(
-                                    "Open Magic Link", url=shortened_link
-                                )
-                            ]
-                        ]
-                        reply_markup = InlineKeyboardMarkup(keyboard)
-                        await update.message.reply_text(
-                            "Transaction Ready! Click the button below to proceed:",
-                            reply_markup=reply_markup,
-                        )
-                    else:
-                        if isinstance(data, dict):
-                            json_data = json.dumps(data, indent=2)
-                            formatted_data = f"```json\n{json_data}\n```"
-                            await update.message.reply_text(
-                                formatted_data, parse_mode=ParseMode.MARKDOWN_V2
-                            )
-                        else:
-                            await update.message.reply_text(str(data))
 
-            # Display finalResponse last
-            if "finalResponse" in response:
-                await update.message.reply_text(f"🤖 {response['finalResponse']}")
-    else:
-        await update.message.reply_text("Sorry, I couldn't connect to the AI service.")
+def get_llm_config(provider_choice):
+    """
+    Get LLM configuration based on user choice.
+
+    Args:
+        provider_choice (str): 'openai' or 'grok3'
+
+    Returns:
+        dict: LLM configuration
+    """
+    # Allow users to enable debug logging via environment variable (default: False)
+    debug_logging = os.getenv("DEBUG_LOGGING", "false").lower() in ("true", "1", "yes")
+    if debug_logging:
+        print("Debug logging is enabled")
+
+    if provider_choice == "openai":
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("Error: OPENAI_API_KEY not found in .env file")
+            print("Please add OPENAI_API_KEY=your_api_key_here to your .env file")
+            return None
+
+        return {
+            "provider": "OpenAI",
+            "model": "gpt-4o-mini",
+            "provider-api-key": api_key,
+            "debug-logging": debug_logging,
+        }
+
+    elif provider_choice == "grok3":
+        api_key = os.getenv("GROK_API_KEY")
+        if not api_key:
+            print("Error: GROK_API_KEY not found in .env file")
+            print("Please add GROK_API_KEY=your_api_key_here to your .env file")
+            return None
+
+        return {
+            "provider": Provider.Grok,
+            "model": "grok-3",
+            "provider-api-key": api_key,
+            "debug-logging": debug_logging,
+        }
 
 
 def main():
     """
-    Initialize and start the Telegram bot.
-
-    Sets up command handlers and message handlers, then starts the bot
-    with polling updates.
-
-    Note:
-        Requires BOT_TOKEN to be set in environment variables
+    Main function to initialize and start the Telegram bot.
     """
-    # Create the Application and pass it your bot's token
-    application = Application.builder().token(BOT_TOKEN).build()
+    # Check if TELEGRAM_BOT_TOKEN is set
+    telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not telegram_token:
+        print("Error: TELEGRAM_BOT_TOKEN not found in .env file")
+        print("Please create a .env file with:")
+        print("TELEGRAM_BOT_TOKEN=your_bot_token_here")
+        print("\nTo get a bot token:")
+        print("1. Message @BotFather on Telegram")
+        print("2. Create a new bot with /newbot")
+        print("3. Copy the token to your .env file")
+        return
 
-    # Add command handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("time", get_time))
-    application.add_handler(CommandHandler("debug", debug_info))
+    # Get user's LLM provider choice
+    provider_choice = get_llm_choice()
 
-    # Add message handler for regular text messages
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    # Get LLM configuration
+    llm_config = get_llm_config(provider_choice)
+    if not llm_config:
+        return
+
+    print(f"\nInitializing Telegram Agent with {provider_choice.upper()}...")
+
+    # Initialize the agent with selected configuration
+    agent = Agent.init(
+        llm_config=llm_config,
+        blockchain_config={
+            "chainId": "240",
+            "explorer-api-key": os.getenv("EXPLORER_API_KEY"),
+            "private-key": os.getenv("PRIVATE_KEY"),
+            "sso-wallet-url": "your-sso-wallet-url",
+        },
+        plugins={
+            "personality": {
+                "tone": "friendly",
+                "language": "English",
+                "verbosity": "medium",
+            },
+            "instructions": (
+                "You are a helpful Crypto.com AI assistant. "
+                "You can help users with cryptocurrency information, "
+                "blockchain queries, and general crypto-related questions. "
+                "Be friendly and informative in your responses."
+            ),
+            "tools": [get_time],
+            "storage": custom_storage,
+            "telegram": {"bot_token": telegram_token},
+        },
     )
 
-    # Start the Bot
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    print("Agent initialized successfully!")
+    print(f"Using {provider_choice.upper()} provider")
+    print(f"Bot Token: ***...")
+    print("Starting Telegram bot...")
+    print("Your bot is now ready to receive messages!")
+    print("Press Ctrl+C to stop the bot")
+
+    try:
+        # Start the Telegram bot
+        agent.start_telegram()
+    except KeyboardInterrupt:
+        print("\nBot stopped by user")
+    except Exception as e:
+        print(f"Error running bot: {e}")
 
 
 if __name__ == "__main__":
