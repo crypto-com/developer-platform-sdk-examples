@@ -1,21 +1,29 @@
-# Telegram Chatbot for Cronos zkEVM
+****# Telegram Chatbot for Cronos zkEVM
 
-A Telegram bot that interacts with Cronos zkEVM network, allowing users to query blockchain information and perform transactions.
+A Telegram bot that interacts with Cronos zkEVM network using the crypto_com_agent_client library, allowing users to query blockchain information and perform transactions.
 
 ## Prerequisites
 
 ### Environment Variables Setup
-1. Set your Explorer API key:
-   ```
-   CRONOS_ZKEVM_TESTNET_API=your_explorer_api_key_here
-   ```
-2. Set your OpenAI API key:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   ```
-3. Set your Telegram Bot token:
+1. Set your Telegram Bot token:
    ```
    TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+   ```
+
+2. Choose and set your LLM provider API key:
+   - For OpenAI:
+     ```
+     OPENAI_API_KEY=your_openai_api_key_here
+     ```
+   - For Grok3:
+     ```
+     GROK_API_KEY=your_grok_api_key_here
+     ```
+
+3. Set your blockchain configuration (optional):
+   ```
+   EXPLORER_API_KEY=your_explorer_api_key_here
+   PRIVATE_KEY=your_private_key_here
    ```
 
 ### MetaMask Setup
@@ -31,56 +39,76 @@ A Telegram bot that interacts with Cronos zkEVM network, allowing users to query
 
 ## Installation and Setup
 
-### 1. Set Up AI Service
-1. Navigate to the AI service directory:
-   ```
-   cd cryptocom-ai-agent-service
-   ```
-2. Export environment variables:
-   ```
-   export EXPLORER_API_KEY=$CRONOS_ZKEVM_TESTNET_API
-   export NODE_ENV=development
-   ```
-3. Install dependencies and start the service:
-   ```
-   yarn
-   yarn dev
-   ```
-The AI service will run on port 8000.
+### 1. Create Environment File
+Create a `.env` file in the project root with your environment variables:
+```
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+OPENAI_API_KEY=your_openai_api_key_here  # OR
+GROK_API_KEY=your_grok_api_key_here      # Choose one
+EXPLORER_API_KEY=your_explorer_api_key_here
+PRIVATE_KEY=your_private_key_here
+```
 
-### 2. Set Up Telegram Bot
+### 2. Set Up Python Environment
 1. Create a Python virtual environment:
    ```
-   conda create -n telegram-bot python=3.10
+   conda create -n telegram-bot python=3.12
    conda activate telegram-bot
    ```
+   
 2. Install dependencies:
    ```
    pip install -r requirements.txt
    ```
-3. Start the bot:
+
+### 3. Start the Bot
+1. Run the bot:
    ```
    python bot.py
    ```
 
+2. Choose your LLM provider when prompted:
+   - Option 1: OpenAI (gpt-4o-mini)
+   - Option 2: Grok3
+
+The bot will initialize and start listening for Telegram messages.
+
 ## Bot Commands
 - `/start` - Initialize the bot
-- `/time` - Get current UTC and local time
-- `/debug` - Display debug information about the current user
+- Natural language queries are supported for blockchain operations
 
-## Basic Prompts
-The bot understands the following natural language commands:
+## Example Prompts
+The bot understands natural language commands such as:
 - `get latest block` - Retrieve the latest block information
-- `send 0x...receiver_address 0.1` - Send 0.1 ZKTCRO to the specified receiver address
-- `send 0x...receiver_address 1.0 to erc20 0x...erc20contractaddress` - Send ERC20 tokens to the specified address
+- `send 0.1 to 0x...receiver_address` - Send 0.1 ZKTCRO to the specified receiver address
+- `send 1.0 ERC20 tokens to 0x...receiver_address using contract 0x...erc20contractaddress` - Send ERC20 tokens
+- `get crypto price BTC` - Get current Bitcoin price (example custom tool)
 
 ## Architecture
 The bot works by:
-1. Receiving messages through Telegram
-2. Processing queries via the AI service running on port 8000
-3. Returning responses including transaction magic links when applicable
+1. Using the crypto_com_agent_client library for core functionality
+2. Supporting multiple LLM providers (OpenAI or Grok3)
+3. Using SQLite for persistent storage (`telegram_agent_state.db`)
+4. Processing natural language queries through the selected LLM
+5. Executing blockchain operations via integrated tools
+6. Returning responses directly through Telegram
+
+## Features
+- **Multi-LLM Support**: Choose between OpenAI and Grok3 providers
+- **Persistent Storage**: SQLite database for maintaining conversation state
+- **Custom Tools**: Extensible with custom functions (example: crypto price lookup)
+- **Blockchain Integration**: Direct integration with Cronos zkEVM network
+- **Natural Language Processing**: Understands conversational queries
 
 ## Error Handling
-- The bot will notify you if there are connection issues with the AI service
+- The bot will validate environment variables on startup
+- Missing API keys will be reported with helpful setup instructions
 - Transaction errors will be reported with appropriate error messages
 - Invalid commands will receive helpful error responses
+
+## Getting a Telegram Bot Token
+To create a Telegram bot:
+1. Message @BotFather on Telegram
+2. Use `/newbot` command to create a new bot
+3. Follow the prompts to set up your bot
+4. Copy the provided token to your `.env` file
