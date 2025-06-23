@@ -14,11 +14,13 @@ Prerequisites:
 1. Create a .env file with TELEGRAM_BOT_TOKEN
 2. Set up your Telegram bot via @BotFather
 3. Install dependencies: python-telegram-bot is already in pyproject.toml
-4. For OpenAI: Set OPENAI_API_KEY in .env
-5. For Grok3: Set GROK_API_KEY in .env
+4. Set DASHBOARD_API_KEY in .env for blockchain operations
+5. For OpenAI: Set OPENAI_API_KEY in .env
+6. For Grok3: Set GROK_API_KEY in .env
 
 Environment Variables:
 - TELEGRAM_BOT_TOKEN: Required - Your Telegram bot token
+- DASHBOARD_API_KEY: Required - Your unified API key for blockchain operations
 - OPENAI_API_KEY: Required for OpenAI provider
 - GROK_API_KEY: Required for Grok3 provider  
 - DEBUG_LOGGING: Optional - Set to "true" to enable debug logging (default: false)
@@ -164,10 +166,9 @@ def main():
     agent = Agent.init(
         llm_config=llm_config,
         blockchain_config={
-            "chainId": "240",
-            "explorer-api-key": os.getenv("EXPLORER_API_KEY"),
+            "api-key": os.getenv("DASHBOARD_API_KEY"),
             "private-key": os.getenv("PRIVATE_KEY"),
-            "sso-wallet-url": "your-sso-wallet-url",
+            "timeout": 60,
         },
         plugins={
             "personality": {

@@ -25,10 +25,12 @@ agent = Agent.init(
         "provider": Provider.Grok,
         "model": "grok-3",
         "provider-api-key": os.getenv("GROK_API_KEY"),
+        "debug-logging": False,
     },
     blockchain_config={
-        "chainId": "240",
-        "explorer-api-key": os.getenv("EXPLORER_API_KEY"),
+        "api-key": os.getenv("DASHBOARD_API_KEY"),
+        "private-key": os.getenv("PRIVATE_KEY"),
+        "timeout": 60,
     },
     plugins={
         "tools": [helloworld],
