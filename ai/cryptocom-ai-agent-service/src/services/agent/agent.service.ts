@@ -2,12 +2,12 @@ import {
   Block,
   Client,
   Contract,
-  CronosZkEvm,
   Token,
   Transaction,
   Wallet,
 } from '@crypto.com/developer-platform-client';
 import { validateFunctionArgs } from '../../helpers/agent.helpers.js';
+import { DASHBOARD_API_KEY, DEVELOPER_PLATFORM_PROVIDER_URL, EXPLORER_API_KEY } from '../../helpers/constants/global.constants.js';
 import { logger } from '../../helpers/logger.helper.js';
 import { BaseError } from '../../lib/errors/base.error.js';
 import { DeepSeekService } from '../llm/deepseek.service.js';
@@ -32,9 +32,8 @@ import {
  * Initialize Developer Platform SDK
  */
 Client.init({
-  chain: CronosZkEvm.Testnet,
-  apiKey: process.env.EXPLORER_API_KEY!,
-  provider: 'http://localhost:5173',
+  provider: DEVELOPER_PLATFORM_PROVIDER_URL,
+  apiKey: DASHBOARD_API_KEY,
 });
 
 /**
@@ -183,7 +182,7 @@ export class AIAgentService {
             functionArgs.limit
           );
         case BlockchainFunction.GetContractABI:
-          return await Contract.getContractABI(functionArgs.address);
+          return await Contract.getContractABI(functionArgs.address, EXPLORER_API_KEY);
         case BlockchainFunction.GetTransactionByHash:
           return await Transaction.getTransactionByHash(functionArgs.txHash);
         case BlockchainFunction.GetBlockByTag:
