@@ -14,8 +14,9 @@ const {
 
 const customFormat = printf((info) => {
   // Format the message with any additional arguments
-  const formattedMessage = info[Symbol.for('splat')]
-    ? util.format(info.message, ...info[Symbol.for('splat')])
+  const splat = info[Symbol.for('splat')] as unknown[];
+  const formattedMessage = splat && Array.isArray(splat)
+    ? util.format(info.message, ...splat)
     : info.message;
 
   const sanitizedMessage =

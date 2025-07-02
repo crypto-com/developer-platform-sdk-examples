@@ -819,7 +819,7 @@ export function CreateSession({ onSuccess }: CreateSessionProps) {
               target.style.color = '#ffffff'
             }}
           >
-            🪄 Configure Swap Policies (WZKCRO ⇄ VUSD)
+            Configure Swap Policies (WZKCRO to VUSD)
           </Button>
 
           <div

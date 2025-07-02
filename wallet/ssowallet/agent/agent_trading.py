@@ -218,7 +218,7 @@ def execute_buy(amount: float) -> str:
     Execute a buy order for the given amount of zkCRO.
     Returns a status message.
     """
-    logger.info("💰 ═══════ EXECUTING BUY ORDER ═══════ 💰")
+    logger.info("EXECUTING BUY ORDER")
     logger.info(f"Amount: {amount} zkCRO")
     logger.info("═════════════════════════════════════════")
     return asyncio.run(do_execute_buy(amount))
@@ -258,7 +258,7 @@ def execute_sell(amount: float) -> str:
     Execute a sell order for the given amount of zkCRO.
     Returns a status message.
     """
-    logger.info("💸 ═══════ EXECUTING SELL ORDER ═══════ 💸")
+    logger.info("EXECUTING SELL ORDER")
     logger.info(f"Amount: {amount} zkCRO")
     logger.info("═════════════════════════════════════════")
     return asyncio.run(do_execute_sell(amount))
@@ -349,7 +349,7 @@ def get_status(tool_input: str = "") -> str:
         bot = TradingBot()
         current_price = bot.price_simulator.get_current_price()
         status_data = bot.generate_mock_trading_data(current_price)
-        logger.info("📊 ═══════ Current Market Status ═══════ 📊")
+        logger.info("Current Market Status")
         logger.info(f"{status_data}")
         logger.info("═════════════════════════════════════════")
         return f"Market status retrieved successfully!"
@@ -379,14 +379,14 @@ agent = Agent.init(
 
 
 def main():
-    print("🤖 Welcome to the Crypto Trading Bot Interface! 🚀")
-    print("\n📋 Available Commands:")
-    print("  • 📈 start trading - Begin automated trading")
-    print("  • 🛑 stop trading - Stop the trading bot")
-    print("  • 📊 get status - View current market data (mock)")
-    print("  • 💰 buy <amount> - Execute buy order")
-    print("  • 💸 sell <amount> - Execute sell order")
-    print("\n❌ Type 'exit' or 'quit' to end session")
+    print("Welcome to the Crypto Trading Bot Interface!")
+    print("\nAvailable Commands:")
+    print("  • start trading - Begin automated trading")
+    print("  • stop trading - Stop the trading bot")
+    print("  • get status - View current market data (mock)")
+    print("  • buy <amount> - Execute buy order")
+    print("  • sell <amount> - Execute sell order")
+    print("\nType 'exit' or 'quit' to end session")
     print("=" * 50)
 
     while True:
