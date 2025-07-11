@@ -49,6 +49,7 @@ npm install
 GCP_PROJECT_ID=your-gcp-project-id
 BIGQUERY_DATASET=your_dataset
 BIGQUERY_TABLE=your_table
+GOOGLE_APPLICATION_CREDENTIALS=./gcpkey.json
 ```
 
 > Ensure that your BigQuery dataset and table contain transaction data with `from_address`, `to_address`, and `block_timestamp`.
