@@ -1,0 +1,3 @@
+flask
+cryptocom-agent-client
+flask-cors
