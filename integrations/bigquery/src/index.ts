@@ -13,18 +13,20 @@ const projectId = process.env.BIGQUERY_PROJECT_ID!;
  * BigQuery dataset name containing blockchain data.
  * Loaded from environment variable `BIGQUERY_DATASET`.
  */
-const dataset = process.env.BIGQUERY_ZKEVM_MAINNET_DATASET!;
+const dataset = process.env.BIGQUERY_DATASET!;
+
+/**
+ * BigQuery table name within the dataset.
+ * Loaded from environment variable `BIGQUERY_TABLE`.
+ */
+const table = process.env.BIGQUERY_TABLE!;
 
 /**
  * Fetches UAW counts from BigQuery and returns structured service response.
  */
 async function getUAWResponse(contractAddresses: string[]) {
   try {
-    const bigQueryService = new BigQueryService(
-      "discord-faucet-recaptcha",
-      "cronos_zkevm_mainnet",
-      "transactions"
-    );
+    const bigQueryService = new BigQueryService(projectId, dataset, table);
 
     const counts = await bigQueryService.getUniqueActiveWallets(
       contractAddresses
