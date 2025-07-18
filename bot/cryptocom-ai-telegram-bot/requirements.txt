@@ -15,7 +15,7 @@ charset-normalizer==3.4.2
 ckzg==2.1.1
 click==8.2.1
 crypto-com-developer-platform-client==1.1.0
-cryptocom-agent-client==1.1.0
+cryptocom-agent-client==1.1.1
 cytoolz==1.0.1
 defusedxml==0.7.1
 discord.py==2.5.2
