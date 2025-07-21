@@ -15,7 +15,7 @@ This is the front-end interface for the Crypto.com AI Chatbot, built using React
 Navigate to the app folder and install dependencies:
 
 ```sh
-cd ai-chatbot-app
+cd agent-sdk/examples/chatbot/ai-chatbot-app
 npm install
 ```
 
