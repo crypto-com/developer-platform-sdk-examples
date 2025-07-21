@@ -15,7 +15,7 @@ This is the Flask-based backend server for the Crypto.com AI Chatbot. It provide
 ### 1. Navigate to the server directory:
 
 ```sh
-cd ai-chatbot-server
+cd agent-sdk/examples/chatbot/ai-chatbot-server
 ```
 
 ### 2. Create a virtual environment:
