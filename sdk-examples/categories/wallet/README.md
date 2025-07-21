@@ -16,7 +16,7 @@ This is the front-end interface for the Crypto.com Wallet Playground, built usin
 Navigate to the app folder and install dependencies:
 
 ```sh
-cd agent-sdk/examples/wallet
+cd sdk-examples/categories/wallet
 npm install
 ```
 
