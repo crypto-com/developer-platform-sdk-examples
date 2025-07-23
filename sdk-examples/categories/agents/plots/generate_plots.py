@@ -93,8 +93,7 @@ agent = Agent.init(
         "provider-api-key": os.getenv("OPENAI_API_KEY"),
     },
     blockchain_config={
-        "chainId": "240",
-        "explorer-api-key": os.getenv("EXPLORER_API_KEY"),
+        "api-key": os.getenv("SDK_API_KEY"),
         "private-key": os.getenv("PRIVATE_KEY"),
         "sso-wallet-url": os.getenv("SSO_WALLET_URL", ""),
     },
