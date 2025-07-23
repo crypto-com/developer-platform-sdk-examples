@@ -38,7 +38,6 @@ Create a `.env` file in the `ai-chatbot-server` directory with the following con
 ```env
 OPENAI_API_KEY=your-openai-api-key
 SDK_API_KEY=your-sdk-api-key
-EXPLORER_API_KEY=your-explorer-api-key
 PRIVATE_KEY=your-wallet-private-key
 AI_CHATBOT_APP_URL=http://localhost:5173
 ```

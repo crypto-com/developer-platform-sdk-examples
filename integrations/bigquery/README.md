@@ -34,7 +34,8 @@ This service uses **Google BigQuery** to fetch and count the number of **unique 
 
 ```bash
 git clone https://github.com/crypto-com/developer-platform-sdk-examples.git
-cd integrations/bigquery
+cd developer-platform-sdk-examples/integrations/bigquery
+
 ```
 
 ### 2. Install dependencies
@@ -89,7 +90,7 @@ The core logic is in `BigQueryService`, which:
 | Script          | Description                   |
 | --------------- | ----------------------------- |
 | `npm run start` | Runs the main `index.ts` file |
-| `npm run dev`   | Rund in dev mode              |
+| `npm run dev`   | Runs in dev mode              |
 
 ## Requirements
 
