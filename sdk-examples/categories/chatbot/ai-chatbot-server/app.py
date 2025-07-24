@@ -19,7 +19,6 @@ agent = Agent.init(
     },
     blockchain_config={
         "api-key": os.getenv("SDK_API_KEY"),
-        "explorer-api-key": os.getenv("EXPLORER_API_KEY"),
         "private-key": os.getenv("PRIVATE_KEY"),
         "sso-wallet-url": "your-sso-wallet-url",
     },

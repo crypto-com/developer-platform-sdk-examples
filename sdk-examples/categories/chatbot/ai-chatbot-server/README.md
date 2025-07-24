@@ -15,7 +15,7 @@ This is the Flask-based backend server for the Crypto.com AI Chatbot. It provide
 ### 1. Navigate to the server directory:
 
 ```sh
-cd agent-sdk/examples/chatbot/ai-chatbot-server
+cd developer-platform-sdk-examples/sdk-examples/categories/ai-chatbot-server
 ```
 
 ### 2. Create a virtual environment:
@@ -38,7 +38,6 @@ Create a `.env` file in the `ai-chatbot-server` directory with the following con
 ```env
 OPENAI_API_KEY=your-openai-api-key
 SDK_API_KEY=your-sdk-api-key
-EXPLORER_API_KEY=your-explorer-api-key
 PRIVATE_KEY=your-wallet-private-key
 AI_CHATBOT_APP_URL=http://localhost:5173
 ```

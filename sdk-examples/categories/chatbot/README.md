@@ -26,7 +26,7 @@ This monorepo contains both the **AI-powered chatbot backend** (Flask server) an
 
 ```sh
 git clone https://github.com/crypto-com/developer-platform-sdk-examples.git
-cd agent-sdk/categories/chatbot
+cd developer-platform-sdk-examples/sdk-examples/categories/chatbot
 ```
 
 ### 2. Backend Setup (Python)
@@ -74,7 +74,6 @@ You will need the following environment variables for the Flask server (`ai-chat
 ```env
 OPENAI_API_KEY=your-openai-api-key
 SDK_API_KEY=your-sdk-api-key
-EXPLORER_API_KEY=your-explorer-api-key
 PRIVATE_KEY=your-wallet-private-key
 AI_CHATBOT_APP_URL=http://localhost:5173
 ```
