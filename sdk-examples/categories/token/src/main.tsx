@@ -1,13 +1,13 @@
 import { createRoot } from "react-dom/client";
-import GlobalStyles from "./styles";
 import React from "react";
-import { TransactionExample } from "./app/Transaction/index.tsx";
+import { TokenExample } from "./app/Token/index.tsx";
+import GlobalStyles from "./styles.ts";
 
 const container = document.getElementById("root");
 const root = createRoot(container!);
 root.render(
   <React.StrictMode>
     <GlobalStyles />
-    <TransactionExample />
+    <TokenExample />
   </React.StrictMode>,
 );
