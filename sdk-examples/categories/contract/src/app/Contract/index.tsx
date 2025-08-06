@@ -15,7 +15,7 @@ import {
 } from "./styles";
 
 Client.init({
-  apiKey: "SDK_API_KEY", // https://developer.crypto.com
+  apiKey: import.meta.env.VITE_SDK_API_KEY, // https://developer.crypto.com
 });
 
 interface ApiResult {
