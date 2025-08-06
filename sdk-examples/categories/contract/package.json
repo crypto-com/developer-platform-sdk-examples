@@ -1,9 +1,9 @@
 {
-  "name": "transaction-example",
+  "name": "contract-example",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Example application demonstrating @crypto.com/developer-platform-client Transaction functions",
+  "description": "Example application demonstrating @crypto.com/developer-platform-client Contract functions",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

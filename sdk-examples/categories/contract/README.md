@@ -80,7 +80,7 @@ npm run preview
 
 ## API Key Requirements
 
-Some functions may require valid API credentials. Make sure to provide valid credentials when testing blockchain transaction features.
+Some functions may require valid API credentials. Make sure to provide valid credentials when testing blockchain contract features.
 
 ## License
 
