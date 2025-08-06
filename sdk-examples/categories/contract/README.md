@@ -39,8 +39,11 @@ Client.init({
 
 This example showcases the following **Contract module** functions:
 
-- **getContractCode**: Fetch a contract bytecode by its contract address
 - **getContractAbi**: Fetch contract abi for a specific contract
+
+Other functions
+
+- **getContractCode**: Fetch a contract bytecode by its contract address
 
 ## Usage
 

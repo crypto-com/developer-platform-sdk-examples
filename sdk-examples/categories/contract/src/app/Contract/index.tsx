@@ -68,24 +68,8 @@ export function ContractExample(): JSX.Element {
     }
   };
 
-  const getContractCode = async () => {
-    if (!formState.contractAddress) {
-      setResults((prev) => ({
-        ...prev,
-        getContractCode: {
-          success: false,
-          error: "Please enter contract address",
-        },
-      }));
-      return;
-    }
-    executeFunction("getContractCode", () =>
-      Contract.getContractCode(formState.contractAddress),
-    );
-  };
-
     const getContractABI = async () => {
-    if (!formState.contractAddress && !formState.explorerKey) {
+    if (!formState.contractAddress || !formState.explorerKey) {
       setResults((prev) => ({
         ...prev,
         getContractABI: {
@@ -148,10 +132,6 @@ export function ContractExample(): JSX.Element {
             Get Contract ABI
           </StyledTransactionButton>
           {renderResult("getContractABI")}
-          <StyledTransactionButton onClick={getContractCode}>
-            Get Contract Code
-          </StyledTransactionButton>
-          {renderResult("getContractCode")}
         </StyledSection>
       </StyledContainer>
     </StyledTransaction>
