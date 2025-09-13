@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@crypto.com/developer-platform-client": "^1.1.0",
-    "axios": "1.7.7",
+    "axios": "1.12.0",
     "cors": "2.8.5",
     "dotenv": "16.4.5",
     "ethers": "git@github.com:XinyuCRO/ether.js-otk.git",
