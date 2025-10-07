@@ -78,7 +78,7 @@ langchain-google-vertexai==2.0.24
 langchain-groq==0.3.2
 langchain-mistralai==0.2.4
 langchain-openai==0.3.12
-langchain-text-splitters==0.3.8
+langchain-text-splitters==1.0.0a1
 langchain-xai==0.2.3
 langfuse==2.57.5
 langgraph==0.2.61
