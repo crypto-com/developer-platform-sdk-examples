@@ -21,7 +21,7 @@
     "ethers": "git@github.com:XinyuCRO/ether.js-otk.git",
     "express": "4.21.1",
     "express-rate-limit": "7.4.0",
-    "express-validator": "7.2.0",
+    "express-validator": "7.3.0",
     "jsonwebtoken": "9.0.2",
     "lodash": "4.17.21",
     "openai": "4.63.0",
