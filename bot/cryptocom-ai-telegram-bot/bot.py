@@ -2,52 +2,51 @@
 """
 Telegram Bot Example
 
-This example demonstrates how to use the existing Telegram bot functionality
+This example demonstrates how to use the Telegram bot functionality
 with the crypto_com_agent_client library. The bot will:
 
 1. Load the TELEGRAM_BOT_TOKEN from .env file
-2. Ask user to choose LLM provider (OpenAI or Grok)
+2. Ask user to choose LLM provider (OpenAI or Grok3)
 3. Initialize the agent with selected provider and Telegram plugin
 4. Start the Telegram bot to handle user messages
 
 Prerequisites:
-1. Create a .env file with TELEGRAM_BOT_TOKEN
+1. Create a .env file with required environment variables:
+   - TELEGRAM_BOT_TOKEN (required): Your Telegram bot token from @BotFather
+   - OPENAI_API_KEY or GROK_API_KEY (required): Choose one LLM provider
+   - DASHBOARD_API_KEY (optional): Crypto.com Developer Platform API key
+   - PRIVATE_KEY (optional): Wallet private key for transactions
 2. Set up your Telegram bot via @BotFather
-3. Install dependencies: python-telegram-bot is already in pyproject.toml
-4. Set DASHBOARD_API_KEY in .env for blockchain operations
-5. For OpenAI: Set OPENAI_API_KEY in .env
-6. For Grok: Set GROK_API_KEY in .env
-
-Environment Variables:
-- TELEGRAM_BOT_TOKEN: Required - Your Telegram bot token
-- DASHBOARD_API_KEY: Required - Your unified API key for blockchain operations
-- OPENAI_API_KEY: Required for OpenAI provider
-- GROK_API_KEY: Required for Grok provider  
-- DEBUG_LOGGING: Optional - Set to "true" to enable debug logging (default: false)
+3. Install dependencies: pip install -r requirements.txt
 
 Usage:
     python bot.py
-    
-    # To enable debug logging:
-    DEBUG_LOGGING=true python bot.py
 """
 
 import os
 from datetime import datetime
-import pytz
 from typing import Annotated
-from langgraph.prebuilt import InjectedState
-from langchain_core.tools import tool
-from crypto_com_agent_client import Agent, tool, SQLitePlugin
+
+import pytz
+from crypto_com_agent_client import Agent, SQLitePlugin, tool
 from crypto_com_agent_client.lib.enums.provider_enum import Provider
-from crypto_com_agent_client.lib.enums.workflow_enum import Workflow
+from crypto_com_agent_plugin_telegram import TelegramPlugin
 from dotenv import load_dotenv
+from langgraph.prebuilt import InjectedState
+
+from cronos_tx_analyzer import CronosTransactionAnalyzer
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Custom storage for persistence (optional)
 custom_storage = SQLitePlugin(db_path="telegram_agent_state.db")
+
+# Initialize the Cronos transaction analyzer with dashboard API key
+# This will automatically determine the correct chain and RPC endpoint
+tx_analyzer = CronosTransactionAnalyzer(
+    dashboard_api_key=os.getenv("DASHBOARD_API_KEY")
+)
 
 # Global variable to store current LLM configuration
 current_llm_config = {}
@@ -69,7 +68,7 @@ def get_time() -> str:
     local_time = datetime.now()
 
     message = (
-        f"🕒 Current time:\n\n"
+        f"Current time:\n\n"
         f"UTC: {utc_time.strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
         f"Local: {local_time.strftime('%Y-%m-%d %H:%M:%S')}"
     )
@@ -116,26 +115,95 @@ def get_current_llm_model(state: Annotated[dict, InjectedState]) -> str:
     return message
 
 
+@tool
+def get_transaction_info(tx_hash: str) -> str:
+    """
+    Get detailed information about a Cronos EVM transaction.
+
+    Args:
+        tx_hash: The transaction hash (0x followed by 64 hex characters)
+
+    Returns:
+        A detailed description of the transaction including type, participants, amounts, and status.
+    """
+    try:
+        print(f"[get_transaction_info] Retrieving transaction info for: {tx_hash}")
+        # Validate transaction hash format
+        if not tx_hash.startswith("0x") or len(tx_hash) != 66:
+            return f"Invalid transaction hash format. Expected 0x followed by 64 hex characters, got: {tx_hash}"
+
+        # Check connection
+        if not tx_analyzer.is_connected():
+            return (
+                "Unable to connect to Cronos EVM RPC. Please check network connection."
+            )
+
+        # Get transaction data
+        tx_data = tx_analyzer.get_transaction(tx_hash)
+        if not tx_data:
+            return f"Transaction not found: {tx_hash}. Please verify the hash is correct and on Cronos mainnet."
+
+        # Analyze the transaction
+        analysis = tx_analyzer.analyze_transaction_flow(tx_data)
+
+        # Build response in formatted display style
+        result = []
+
+        result.append(f"Analyzing: {tx_hash}")
+        result.append("------------------------------------------------------------")
+
+        # DESCRIPTION
+        result.append("Description:")
+        description = tx_analyzer.generate_transaction_description(tx_hash)
+        result.append(description)
+
+        # TECHNICAL DETAILS
+        result.append("\nTechnical Details:")
+        result.append(f"Type: {analysis['type']}")
+        result.append(f"From: {analysis['from']}")
+        result.append(f"To: {analysis['to']}")
+        result.append(f"Status: {analysis['status']}")
+        result.append(f"Gas Used: {analysis['gas_used']:,}")
+        if analysis["value_cro"] > 0:
+            result.append(f"CRO Value: {analysis['value_cro']}")
+
+        # SWAP DETAILS (if applicable)
+        if analysis["type"] == "token_swap":
+            from_token = analysis.get("from_token") or analysis.get("input_token")
+            to_token = analysis.get("to_token") or analysis.get("output_token")
+            from_amount = analysis.get("from_amount") or analysis.get("input_amount")
+            to_amount = analysis.get("to_amount") or analysis.get("output_amount")
+
+            if from_token and to_token and from_amount and to_amount:
+                result.append("Swap Details:")
+                result.append(f"   {from_amount} {from_token} → {to_amount} {to_token}")
+
+        return "\n".join(result)
+
+    except Exception as e:
+        return f"Error analyzing transaction: {str(e)}"
+
+
 def get_llm_choice():
     """
     Ask user to choose which LLM provider to use.
 
     Returns:
-        str: 'openai' or 'grok'
+        str: 'openai' or 'grok3'
     """
-    print("\nChoose your LLM provider:")
+    print("\n🤖 Choose your LLM provider:")
     print("1. OpenAI (gpt-4o-mini)")
-    print("2. Grok")
+    print("2. Grok4")
 
     while True:
-        choice = input("\nEnter your choice (1 for OpenAI, 2 for Grok): ").strip()
+        choice = input("\nEnter your choice (1 for OpenAI, 2 for Grok4): ").strip()
 
         if choice == "1":
             return "openai"
         elif choice == "2":
-            return "grok"
+            return "grok3"
         else:
-            print("Invalid choice. Please enter 1 or 2.")
+            print("❌ Invalid choice. Please enter 1 or 2.")
 
 
 def get_llm_config(provider_choice):
@@ -143,20 +211,15 @@ def get_llm_config(provider_choice):
     Get LLM configuration based on user choice.
 
     Args:
-        provider_choice (str): 'openai' or 'grok'
+        provider_choice (str): 'openai' or 'grok3'
 
     Returns:
         dict: LLM configuration
     """
-    # Allow users to enable debug logging via environment variable (default: False)
-    debug_logging = os.getenv("DEBUG_LOGGING", "false").lower() in ("true", "1", "yes")
-    if debug_logging:
-        print("Debug logging is enabled")
-
     if provider_choice == "openai":
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            print("Error: OPENAI_API_KEY not found in .env file")
+            print("❌ Error: OPENAI_API_KEY not found in .env file")
             print("Please add OPENAI_API_KEY=your_api_key_here to your .env file")
             return None
 
@@ -164,21 +227,20 @@ def get_llm_config(provider_choice):
             "provider": "OpenAI",
             "model": "gpt-4o-mini",
             "provider-api-key": api_key,
-            "debug-logging": debug_logging,
+            "debug-logging": True,
         }
 
-    elif provider_choice == "grok":
+    elif provider_choice == "grok3":
         api_key = os.getenv("GROK_API_KEY")
         if not api_key:
-            print("Error: GROK_API_KEY not found in .env file")
+            print("❌ Error: GROK_API_KEY not found in .env file")
             print("Please add GROK_API_KEY=your_api_key_here to your .env file")
             return None
 
         return {
             "provider": Provider.Grok,
-            "model": "grok-4-0709",
+            "model": "grok-4",
             "provider-api-key": api_key,
-            "debug-logging": debug_logging,  # Enable debug logging to see the issue
         }
 
 
@@ -191,7 +253,7 @@ def main():
     # Check if TELEGRAM_BOT_TOKEN is set
     telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not telegram_token:
-        print("Error: TELEGRAM_BOT_TOKEN not found in .env file")
+        print("❌ Error: TELEGRAM_BOT_TOKEN not found in .env file")
         print("Please create a .env file with:")
         print("TELEGRAM_BOT_TOKEN=your_bot_token_here")
         print("\nTo get a bot token:")
@@ -211,21 +273,7 @@ def main():
     # Store the LLM configuration globally so the tool can access it
     current_llm_config = llm_config
 
-    print(f"\nInitializing Telegram Agent with {provider_choice.upper()}...")
-
-    # Create a sanitized version for debug logging (mask the API key)
-    if llm_config.get("debug-logging", False):
-        debug_config = llm_config.copy()
-        if "provider-api-key" in debug_config:
-            api_key = debug_config["provider-api-key"]
-            debug_config["provider-api-key"] = (
-                f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "***"
-            )
-
-        print(f"[DEBUG] LLM Config: {debug_config}")
-        provider = llm_config.get("provider")
-        provider_str = provider.value if hasattr(provider, "value") else str(provider)
-        print(f"[DEBUG] Provider value: {provider_str} (type: {type(provider)})")
+    print(f"\n🚀 Initializing Telegram Agent with {provider_choice.upper()}...")
 
     # Initialize the agent with selected configuration
     agent = Agent.init(
@@ -233,7 +281,6 @@ def main():
         blockchain_config={
             "api-key": os.getenv("DASHBOARD_API_KEY"),
             "private-key": os.getenv("PRIVATE_KEY"),
-            "timeout": 60,
         },
         plugins={
             "personality": {
@@ -242,34 +289,37 @@ def main():
                 "verbosity": "medium",
             },
             "instructions": (
-                "You are a helpful Crypto.com AI assistant. "
-                "You can help users with cryptocurrency information, "
-                "blockchain queries, and general crypto-related questions. "
+                "You are a blockchain transaction analyst and Crypto.com AI assistant. "
+                "When asked about a transaction, use the get_transaction_info tool to retrieve detailed information. "
+                "The tool returns pre-formatted responses with '**Summary:**' and '**Description:**' sections. "
+                "Present the tool's response EXACTLY as returned, without reformatting or summarizing. "
+                "Do not modify, truncate, or rephrase the formatted response from get_transaction_info. "
+                "You can also help users with cryptocurrency information, blockchain queries, and general crypto-related questions. "
                 "Be friendly and informative in your responses. "
                 "IMPORTANT: When users ask about your current configuration, model, "
                 "or provider, always use the available tools to get real-time information "
                 "rather than relying on your training data."
             ),
-            "tools": [get_time, get_current_llm_model],
+            "tools": [get_time, get_current_llm_model, get_transaction_info],
             "storage": custom_storage,
-            "telegram": {"bot_token": telegram_token},
+            "telegram": TelegramPlugin(bot_token=telegram_token),
         },
     )
 
-    print("Agent initialized successfully!")
-    print(f"Using {provider_choice.upper()} provider")
-    print(f"Bot Token: ***...")
-    print("Starting Telegram bot...")
-    print("Your bot is now ready to receive messages!")
-    print("Press Ctrl+C to stop the bot")
+    print("✅ Agent initialized successfully!")
+    print(f"🤖 Using {provider_choice.upper()} provider")
+    print(f"🔑 Bot Token: {telegram_token[:10]}...")
+    print("📱 Starting Telegram bot...")
+    print("💬 Your bot is now ready to receive messages!")
+    print("🛑 Press Ctrl+C to stop the bot")
 
     try:
         # Start the Telegram bot
-        agent.start_telegram()
+        agent.start()
     except KeyboardInterrupt:
-        print("\nBot stopped by user")
+        print("\n🛑 Bot stopped by user")
     except Exception as e:
-        print(f"Error running bot: {e}")
+        print(f"❌ Error running bot: {e}")
 
 
 if __name__ == "__main__":
