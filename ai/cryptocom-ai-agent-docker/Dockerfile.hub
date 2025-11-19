@@ -1,0 +1,9 @@
+# Official AWS Lambda base image for Python 3.12
+FROM public.ecr.aws/lambda/python:3.12
+
+# Copy requirements and install dependencies
+COPY requirements.txt ${LAMBDA_TASK_ROOT}/
+RUN pip3 install -r requirements.txt -t ${LAMBDA_TASK_ROOT}
+
+# Users should set their own CMD when extending this image
+# Example: CMD ["your_handler.lambda_handler"]
