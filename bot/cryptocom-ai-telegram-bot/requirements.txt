@@ -170,7 +170,7 @@ trove-classifiers==2025.9.11.17
 types-requests==2.32.4.20250913
 typing_extensions==4.15.0
 uritemplate==4.2.0
-urllib3==2.5.0
+urllib3==2.6.0
 validators==0.35.0
 virtualenv==20.35.4
 web3==7.10.0
