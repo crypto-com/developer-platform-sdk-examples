@@ -172,7 +172,7 @@ typing_extensions==4.15.0
 uritemplate==4.2.0
 urllib3==2.5.0
 validators==0.35.0
-virtualenv==20.35.4
+virtualenv==20.36.1
 web3==7.10.0
 websockets==15.0.1
 wheel==0.45.1
