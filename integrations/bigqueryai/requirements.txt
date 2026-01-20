@@ -82,7 +82,7 @@ langchain-text-splitters==0.3.8
 langchain-xai==0.2.3
 langfuse==2.57.5
 langgraph==0.2.61
-langgraph-checkpoint==2.1.0
+langgraph-checkpoint==3.0.0
 langgraph-sdk==0.1.72
 langsmith==0.3.45
 mccabe==0.7.0
