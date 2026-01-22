@@ -140,7 +140,7 @@ urllib3==2.5.0
 validators==0.35.0
 web3==7.10.0
 websockets==15.0.1
-wheel==0.45.1
+wheel==0.46.2
 wrapt==1.17.2
 wsproto==1.2.0
 yarl==1.20.1
